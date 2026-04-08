@@ -1,98 +1,114 @@
-"""
-Career Model Library - Minimal stub for model inference
-This module provides the CareerModel class interface for model predictions.
-"""
-
 import json
 from typing import Dict, List, Any
+import pickle
+import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+import numpy as np
 
+def load_dataset(dataset_path: str) -> pd.DataFrame:
+    """Load dataset from path."""
+    return pd.read_excel(dataset_path)
 
 class CareerModel:
-    """
-    Career Model Interface
-    Handles prediction of career paths and skill recommendations based on profile data.
-    """
-
     def __init__(self):
-        """Initialize the career model."""
         self.model = None
-
+        self.le_role = LabelEncoder()
+        self.le_salary = LabelEncoder()
+        self.feature_cols = []
+        
+    @classmethod
+    def from_training_dataframe(cls, df: pd.DataFrame):
+        instance = cls()
+        
+        # Prepare features
+        # we combine skills, tools and experience description into one text
+        df['skills'] = df['skills'].fillna('')
+        df['tools'] = df['tools'].fillna('')
+        df['combined_features'] = df['skills'].astype(str) + ' ' + df['tools'].astype(str)
+        if 'experience' in df.columns:
+            df['combined_features'] += ' ' + df['experience'].astype(str)
+            
+        X = df['combined_features']
+        
+        # Prepare targets
+        # Target 1: career_path
+        y_role = instance.le_role.fit_transform(df['career_path'].fillna('Software Developer'))
+        
+        # Train model
+        print("Training Random Forest pipeline...")
+        instance.model = Pipeline([
+            ('tfidf', TfidfVectorizer(max_features=1000)),
+            ('clf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1))
+        ])
+        instance.model.fit(X, y_role)
+        
+        # Dummy salaries
+        instance.le_salary.fit(["40k-60k", "60k-90k", "90k-120k", "120k+"])
+        instance.feature_cols = ['combined_features']
+        return instance
+        
+    def save(self, path: str):
+        with open(path, 'wb') as f:
+            pickle.dump(self, f)
+            
     def predict(self, profile_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Predict career path and skills based on profile data.
-        
-        Args:
-            profile_data: Dictionary containing user profile information
+        if self.model is None:
+            return self._generate_prediction(
+                profile_data.get('skills', []), 
+                profile_data.get('experience_years', 0), 
+                profile_data.get('education', ''), 
+                profile_data.get('target_career', '')
+            )
             
-        Returns:
-            Dictionary with predictions and recommendations
-        """
-        # Extract profile information
-        skills = profile_data.get('skills', [])
-        experience_years = profile_data.get('experience_years', 0)
-        education = profile_data.get('education', '')
-        target_career = profile_data.get('target_career', '')
-
-        # Default prediction logic (fallback if model isn't loaded)
-        return self._generate_prediction(
-            skills=skills,
-            experience=experience_years,
-            education=education,
-            target_career=target_career
-        )
-
-    def _generate_prediction(
-        self,
-        skills: List[str],
-        experience: int,
-        education: str,
-        target_career: str
-    ) -> Dict[str, Any]:
-        """
-        Generate a career prediction based on profile data.
+        skills_str = ' '.join(profile_data.get('skills', []))
+        tools_str = ' '.join(profile_data.get('tools', []))
+        exp_text = ''
+        for exp in profile_data.get('experience', []):
+            if isinstance(exp, dict) and 'description' in exp:
+                exp_text += ' ' + exp['description']
+                
+        combined = skills_str + ' ' + tools_str + ' ' + exp_text
         
-        Args:
-            skills: List of user skills
-            experience: Years of experience
-            education: Education level/degree
-            target_career: Target career path
+        # Predict role
+        role_idx = self.model.predict([combined])[0]
+        role_probas = self.model.predict_proba([combined])[0]
+        confidence = float(np.max(role_probas))
+        predicted_role = self.le_role.inverse_transform([role_idx])[0]
+        
+        # Dummy logic for salary range using experience years
+        exp_years = profile_data.get('experience_years', 0)
+        if hasattr(exp_years, '__contains__') and isinstance(exp_years, str):
+            try: exp_years = int(''.join(filter(str.isdigit, exp_years)))
+            except: exp_years = 0
             
-        Returns:
-            Prediction dictionary
-        """
-        # Determine predicted role
-        if not target_career:
-            if 'Python' in skills or 'Machine Learning' in skills:
-                predicted_role = 'Data Scientist'
-            elif 'React' in skills or 'JavaScript' in skills:
-                predicted_role = 'Frontend Developer'
-            elif 'Java' in skills or 'Node.js' in skills:
-                predicted_role = 'Backend Developer'
-            elif 'AWS' in skills or 'Docker' in skills:
-                predicted_role = 'DevOps Engineer'
-            else:
-                predicted_role = 'Software Developer'
+        if exp_years < 2:
+            salary_rng = "40000 - 60000"
+        elif exp_years < 5:
+            salary_rng = "60000 - 90000"
+        elif exp_years < 10:
+            salary_rng = "90000 - 150000"
         else:
-            predicted_role = target_career
-
-        # Calculate confidence based on skills match
-        confidence = min(0.95, 0.5 + (len(skills) * 0.05))
-
-        # Determine salary range based on experience
-        if experience < 2:
-            salary_min, salary_max = 40000, 60000
-        elif experience < 5:
-            salary_min, salary_max = 60000, 90000
-        elif experience < 10:
-            salary_min, salary_max = 90000, 150000
-        else:
-            salary_min, salary_max = 120000, 200000
+            salary_rng = "120000 - 200000"
 
         return {
             'predicted_role': predicted_role,
-            'predicted_salary_range': f'{salary_min:,} - {salary_max:,}',
+            'predicted_salary_range': salary_rng,
+            'confidence': round(confidence, 2),
+            'recommended_skills': profile_data.get('skills', []),
+            'market_fit': 'Excellent' if confidence > 0.8 else 'Good' if confidence > 0.6 else 'Fair',
+            'growth_potential': 'High' if exp_years < 5 else 'Medium' if exp_years < 10 else 'Stable'
+        }
+        
+    def _generate_prediction(self, skills, experience, education, target_career):
+        confidence = min(0.95, 0.5 + (len(skills) * 0.05))
+        return {
+            'predicted_role': target_career or 'Software Developer',
+            'predicted_salary_range': '60000 - 90000',
             'confidence': round(confidence, 2),
             'recommended_skills': skills,
             'market_fit': 'Excellent' if confidence > 0.8 else 'Good' if confidence > 0.6 else 'Fair',
-            'growth_potential': 'High' if experience < 5 else 'Medium' if experience < 10 else 'Stable'
+            'growth_potential': 'High'
         }

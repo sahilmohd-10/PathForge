@@ -402,8 +402,16 @@ Provide a highly accurate and critical comprehensive analysis. Return ONLY valid
       "link": "https://example.com (or leave empty if none available)"
     }
   ],
+  "eligible_positions": [
+    {
+      "position": "Job Title",
+      "other_skills_required": ["Skill 1", "Skill 2"]
+    }
+  ],
   "job_description": "A 3-5 sentence description of what the daily responsibilities are for the ML Predicted Career Path."
-}`;
+}
+
+Generate exactly 10 eligible_positions.`;
 
     try {
       console.log('📞 Calling Gemini for comprehensive analysis...');
@@ -428,6 +436,7 @@ Provide a highly accurate and critical comprehensive analysis. Return ONLY valid
         profile_breakdown: [],
         skill_gaps: [],
         recommended_courses: [],
+        eligible_positions: [],
         job_description: "Unable to generate job description at this time."
       };
     }

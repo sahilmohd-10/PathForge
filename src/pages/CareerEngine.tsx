@@ -25,6 +25,7 @@ interface UnifiedResults {
   predictedRole: string;
   skillGaps: { missing_skill: string; topics_to_cover: string[] }[];
   recommendedCourses: { name: string; platform: string; duration: string; link?: string }[];
+  eligiblePositions?: { position: string; other_skills_required: string[] }[];
   jobDescription: string;
 }
 
@@ -551,6 +552,33 @@ const CareerEngine = () => {
               <p className="text-gray-500 italic">No specific courses recommended at this time.</p>
             )}
           </div>
+
+          {/* Eligible Positions */}
+          {unifiedResults.eligiblePositions && unifiedResults.eligiblePositions.length > 0 && (
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <Target className="h-6 w-6 text-purple-500" />
+                Top 10 Eligible Positions
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {unifiedResults.eligiblePositions.map((pos, i) => (
+                  <div key={i} className="bg-white p-6 rounded-3xl border border-purple-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-3">{pos.position}</h4>
+                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">Other Skills Required:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {pos.other_skills_required.map((skill, sIdx) => (
+                          <span key={sIdx} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium border border-purple-100">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="text-center pt-8">
             <button

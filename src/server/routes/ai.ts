@@ -145,6 +145,7 @@ router.post('/unified-analysis', async (req: any, res) => {
       predictedRole: predictedRole,
       skillGaps: geminiAnalysis.skill_gaps || [],
       recommendedCourses: geminiAnalysis.recommended_courses || [],
+      eligiblePositions: geminiAnalysis.eligible_positions || [],
       jobDescription: geminiAnalysis.job_description || 'No description available.',
     };
 
