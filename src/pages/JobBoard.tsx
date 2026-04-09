@@ -323,7 +323,7 @@ const JobBoard = () => {
       subtitle="Discover real job opportunities from Adzuna - the largest job database"
     >
       {/* Source & Filters Section */}
-      <div className="bg-linear-to-r from-indigo-50 to-blue-50 dark:from-neon-dark dark:to-neon-gray p-6 rounded-2xl border border-indigo-100 dark:border-neon-teal mb-8">
+      <div className="bg-linear-to-r from-primary-50 to-primary-50 dark:from-neon-dark dark:to-neon-gray p-6 rounded-2xl border border-primary-100 dark:border-neon-teal mb-8">
         <div className="space-y-4">
           {/* Search Form */}
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
@@ -334,12 +334,17 @@ const JobBoard = () => {
                 placeholder="Search by job title, skills, or company (e.g., 'Python Developer', 'React')..."
                 className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-cyan placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (!e.target.value.trim() && searchType === 'search') {
+                    setSearchType('browse');
+                  }
+                }}
               />
             </div>
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 dark:bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-700 transition-all whitespace-nowrap"
+              className="btn-primary"
             >
               Search Jobs
             </button>

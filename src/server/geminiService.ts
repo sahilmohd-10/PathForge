@@ -100,7 +100,7 @@ Generate insights based on current market trends. Return ONLY valid JSON (no mar
 
     try {
       console.log('📞 Calling Gemini for predictive insights...');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -157,7 +157,7 @@ Generate practical, personalized tips. Return ONLY valid JSON (no markdown):
 
     try {
       console.log('📞 Calling Gemini for improvement tips...');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -200,7 +200,7 @@ Output exactly the specified number of JSON objects (one per line, no markdown):
 
     try {
       console.log('📞 Calling Gemini for live insights...');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContentStream(prompt);
       
       let buffer = '';
@@ -278,7 +278,7 @@ Create realistic, actionable career paths. Return ONLY valid JSON (no markdown):
 
     try {
       console.log('📞 Calling Gemini for career paths...');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -334,7 +334,7 @@ Provide a comprehensive skill gap analysis. Return ONLY valid JSON (no markdown)
 
     try {
       console.log('📞 Calling Gemini for skill gap analysis...');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -415,7 +415,7 @@ Generate exactly 10 eligible_positions.`;
 
     try {
       console.log('📞 Calling Gemini for comprehensive analysis...');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -477,7 +477,7 @@ Extract and return ONLY valid JSON (no markdown, no code fences):
 
     try {
       console.log('📞 Calling Gemini for resume parsing...');
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();

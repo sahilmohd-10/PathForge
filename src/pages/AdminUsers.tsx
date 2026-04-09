@@ -125,8 +125,6 @@ const AdminUsers = () => {
 
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-neon-cyan transition-colors duration-300">User Management</h2>
-          <p className="text-gray-500 dark:text-neon-light transition-colors duration-300">Manage all registered users on the platform.</p>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />

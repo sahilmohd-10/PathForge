@@ -166,10 +166,17 @@ router.post('/upload-resume', upload.single('resume'), async (req: any, res) => 
     let resumeText = '';
     
     if (req.file.mimetype === 'application/pdf') {
-      const { PDFParse } = await import('pdf-parse');
-      const parser = new PDFParse({ data: req.file.buffer });
-      const textResult = await parser.getText();
-      resumeText = textResult.text;
+      try {
+        console.log('📄 Parsing PDF resume using PDFParse class...');
+        const { PDFParse } = await import('pdf-parse');
+        const parser = new PDFParse({ data: req.file.buffer });
+        const textResult = await parser.getText();
+        resumeText = textResult.text;
+        console.log('✅ PDF parsed successfully, text length:', resumeText.length);
+      } catch (pdfErr: any) {
+        console.error('❌ PDF parsing failed:', pdfErr);
+        return res.status(500).json({ error: 'Failed to extract text from PDF' });
+      }
     } else if (req.file.mimetype === 'text/plain') {
       resumeText = req.file.buffer.toString('utf-8');
     } else {

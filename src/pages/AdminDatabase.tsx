@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Database, Trash2, RefreshCw, ChevronRight, ChevronDown, Table as TableIcon, Edit2, Plus, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import PageShell from '../components/PageShell';
 
@@ -421,8 +421,6 @@ export default function AdminDatabase() {
       </AnimatePresence>
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-neon-cyan">Database Management</h1>
-          <p className="text-gray-500 dark:text-neon-light mt-2">Full control over all platform data tables.</p>
         </div>
         <div className="flex gap-4">
           <button 

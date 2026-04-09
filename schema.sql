@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     user_id INTEGER UNIQUE NOT NULL,
     bio TEXT,
     avatar_url TEXT,
+    background_url TEXT,
     target_career TEXT,
     education TEXT,
     experience_years INTEGER DEFAULT 0,

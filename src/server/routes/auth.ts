@@ -68,7 +68,20 @@ router.post('/login', async (req, res) => {
     }
     
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token, user: { id: user.id, email: user.email, fullName: user.full_name, role: user.role } });
+    
+    // Fetch profile for avatar
+    const profile = await db('profiles').where({ user_id: user.id }).first();
+    
+    res.json({ 
+      token, 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        fullName: user.full_name, 
+        role: user.role,
+        avatarUrl: profile?.avatar_url
+      } 
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -136,7 +149,20 @@ router.post('/google', async (req, res) => {
     }
 
     const jwtToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token: jwtToken, user: { id: user.id, email: user.email, fullName: user.full_name, role: user.role } });
+    
+    // Fetch profile for avatar
+    const profile = await db('profiles').where({ user_id: user.id }).first();
+    
+    res.json({ 
+      token: jwtToken, 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        fullName: user.full_name, 
+        role: user.role,
+        avatarUrl: profile?.avatar_url
+      } 
+    });
   } catch (error: any) {
     console.error('Google auth error:', error);
     res.status(500).json({ error: error.message });

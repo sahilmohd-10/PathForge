@@ -3,25 +3,36 @@ import React from 'react';
 interface PageShellProps {
   title: string;
   subtitle?: string;
+  children: React.ReactNode;
   actions?: React.ReactNode;
   maxWidth?: string;
-  children: React.ReactNode;
 }
 
-const PageShell: React.FC<PageShellProps> = ({ title, subtitle, actions, maxWidth = 'max-w-7xl', children }) => {
+const PageShell: React.FC<PageShellProps> = ({ 
+  title, 
+  subtitle, 
+  children, 
+  actions,
+  maxWidth = 'max-w-7xl'
+}) => {
   return (
-    <div className={`p-8 ${maxWidth} mx-auto`}>
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className={`p-6 md:p-8 ${maxWidth} mx-auto transition-all duration-300`}>
+      <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-slate-200 dark:border-slate-800 pb-10">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 dark:text-neon-cyan transition-colors duration-300">{title}</h1>
-          {subtitle && <p className="mt-2 text-gray-500 dark:text-neon-light max-w-2xl transition-colors duration-300">{subtitle}</p>}
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">{title}</h1>
+          {subtitle && <p className="text-slate-500 dark:text-slate-400 font-medium">{subtitle}</p>}
         </div>
-        {actions && <div className="flex items-center gap-3 transition-all duration-300">{actions}</div>}
+        {actions && (
+          <div className="flex flex-wrap gap-3">
+            {actions}
+          </div>
+        )}
       </div>
-      {children}
+      <div className="pb-10">
+        {children}
+      </div>
     </div>
   );
 };
 
 export default PageShell;
-

@@ -27,7 +27,7 @@ router.get('/:userId', async (req, res) => {
 });
 
 router.put('/:userId', async (req, res) => {
-  const { bio, target_career, education, experience_years, avatar_url, location, website } = req.body;
+  const { bio, target_career, education, experience_years, avatar_url, background_url, location, website } = req.body;
   try {
     await db('profiles').where({ user_id: req.params.userId }).update({
       bio,
@@ -35,6 +35,7 @@ router.put('/:userId', async (req, res) => {
       education,
       experience_years,
       avatar_url,
+      background_url,
       location,
       website
     });

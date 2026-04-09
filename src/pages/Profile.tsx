@@ -5,7 +5,7 @@ import { User, Mail, BookOpen, Briefcase, Award, Edit3, X, Check, Upload, Image 
 import PageShell from '../components/PageShell';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [formData, setFormData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -13,6 +13,7 @@ const Profile = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [backgroundPreview, setBackgroundPreview] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -68,17 +69,27 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     if (!user?.id) return;
+    setIsSaving(true);
     try {
       await axios.put(`/api/profile/${user.id}`, formData);
       const updated = { ...profile, ...formData };
       setProfile(updated);
       setAvatarPreview(formData.avatar_url);
       setBackgroundPreview(formData.background_url);
+      
+      // Update AuthContext for sidebar
+      updateUser({ 
+        avatarUrl: formData.avatar_url,
+        fullName: profile.fullName // assuming fullName is stable or also in formData
+      });
+      
       setIsEditing(false);
-      alert('Profile updated successfully.');
+      // alert('Profile updated successfully.');
     } catch (err) {
       console.error('Profile update failed:', err);
       alert('Unable to save profile.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -100,7 +111,7 @@ const Profile = () => {
       
       // Update local profile state with parsed data
       const parsed = res.data.parsed;
-      setProfile({
+      const newProfile = {
         ...profile,
         bio: parsed.bio || profile.bio,
         target_career: parsed.target_career || profile.target_career,
@@ -108,11 +119,26 @@ const Profile = () => {
         experience_years: parsed.experience_years !== undefined ? parsed.experience_years : profile.experience_years,
         location: parsed.location || profile.location,
         website: parsed.website || profile.website,
-        skills: [...(profile.skills || []), ...(parsed.skills || [])]
-      });
+        skills: parsed.skills && Array.isArray(parsed.skills) ? [...(profile.skills || []), ...parsed.skills] : profile.skills
+      };
       
-      alert('Resume parsed! Your profile has been updated with the extracted information.');
-      window.location.reload(); // Refresh to show all changes (skills, etc)
+      setProfile(newProfile);
+      setFormData({
+        ...formData,
+        bio: newProfile.bio,
+        target_career: newProfile.target_career,
+        education: newProfile.education,
+        experience_years: newProfile.experience_years,
+        location: newProfile.location,
+        website: newProfile.website
+      });
+
+      // Update AuthContext for sidebar
+      if (newProfile.avatar_url) {
+        updateUser({ avatarUrl: newProfile.avatar_url });
+      }
+      
+      alert('Resume parsed successfully! Your profile has been updated.');
     } catch (err: any) {
       console.error('Resume upload failed:', err);
       alert(err.response?.data?.error || 'Failed to parse resume. Please try again.');
@@ -148,7 +174,7 @@ const Profile = () => {
       <div className="space-y-8">
         <div className="bg-white dark:bg-neon-dark rounded-3xl shadow-sm border border-gray-100 dark:border-neon-teal overflow-hidden transition-colors duration-300">
           {/* Background Banner */}
-          <div className="relative h-32 bg-linear-to-r from-indigo-600 to-violet-600 overflow-hidden group">
+          <div className="relative h-44 bg-gradient-to-r from-primary-600 to-primary-800 dark:from-neon-cyan dark:to-neon-teal overflow-hidden group">
             {backgroundPreview || profile?.background_url ? (
               <img
                 src={backgroundPreview || profile?.background_url}
@@ -185,7 +211,7 @@ const Profile = () => {
                     className="h-full w-full object-cover rounded-2xl"
                   />
                 ) : (
-                  <div className="h-full w-full bg-indigo-100 dark:bg-neon-teal rounded-2xl flex items-center justify-center text-indigo-700 dark:text-neon-dark text-4xl font-bold transition-colors duration-300">
+                  <div className={`h-full w-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-4xl font-bold transition-colors duration-300`}>
                     {user?.fullName?.charAt(0)}
                   </div>
                 )}
@@ -217,10 +243,11 @@ const Profile = () => {
                   <>
                     <button
                       onClick={handleSaveProfile}
-                      className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all"
+                      disabled={isSaving}
+                      className="btn-primary flex items-center gap-2 px-8 py-2.5 disabled:opacity-50"
                     >
-                      <Check className="h-4 w-4" />
-                      Save
+                      {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      {isSaving ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button
                       onClick={handleCancelEdit}

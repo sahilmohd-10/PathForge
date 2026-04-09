@@ -346,7 +346,7 @@ const DataMatch: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
                     No matches found matching your criteria.
                   </td>
                 </tr>

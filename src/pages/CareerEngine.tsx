@@ -4,6 +4,7 @@ import { Brain, Sparkles, ChevronRight, RefreshCw, TrendingUp, Target, Zap, Doll
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import PageShell from '../components/PageShell';
 
 interface ResumeData {
   personalInfo: {
@@ -202,18 +203,10 @@ const CareerEngine = () => {
     : [];
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <header className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="inline-flex items-center justify-center p-3 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl transition-colors duration-300">
-            <Brain className="h-8 w-8 text-indigo-600 dark:text-neon-cyan" />
-          </div>
-          <div>
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-neon-cyan mb-1 transition-colors duration-300">AI Career Engine</h2>
-            <p className="text-gray-500 dark:text-neon-light font-medium transition-colors duration-300">Comprehensive AI & ML trajectory analysis</p>
-          </div>
-        </div>
-      </header>
+    <PageShell
+      title="AI Career Engine"
+      subtitle="Comprehensive AI & ML trajectory analysis powered by PathForge intelligence"
+    >
 
       {error && (
         <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-400 rounded-2xl flex items-center gap-3 transition-colors duration-300">
@@ -231,8 +224,8 @@ const CareerEngine = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <Sparkles className="h-6 w-6 text-indigo-600" />
-                <h3 className="text-xl font-bold text-gray-900">Career Snapshot</h3>
+                <Sparkles className="h-6 w-6 text-primary-600 dark:text-neon-cyan" />
+                <h3 className="text-xl font-bold text-gray-900 dark:text-neon-cyan">Career Snapshot</h3>
               </div>
               <div className="relative">
                 <input
@@ -245,10 +238,7 @@ const CareerEngine = () => {
                 />
                 <label
                   htmlFor="resume-upload"
-                  className={`cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${uploading
-                      ? 'bg-gray-100 text-gray-400 dark:bg-neon-dark dark:text-gray-500 cursor-not-allowed'
-                      : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50 outline-2 outline-indigo-600'
-                    }`}
+                  className={`btn-secondary inline-flex items-center gap-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {uploading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -336,8 +326,7 @@ const CareerEngine = () => {
                 <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Technical Skills (comma separated) <span className="text-red-500">*</span></label>
                 <input
                   type="text"
-                  placeholder="e.g. React, Node.js, Python, SQL"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200"
+                  className="input-base"
                   value={resumeData.skills}
                   onChange={(e) => setResumeData({ ...resumeData, skills: e.target.value })}
                 />
@@ -370,7 +359,7 @@ const CareerEngine = () => {
             transition={{ delay: 0.4 }}
             onClick={handleAnalyze}
             disabled={analyzing}
-            className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-bold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 text-lg"
+            className="btn-primary w-full py-5 text-lg flex items-center justify-center gap-3"
           >
             {analyzing ? (
               <>
@@ -393,14 +382,14 @@ const CareerEngine = () => {
         >
           {/* Top Hero Section: Score & Predicted Role */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-indigo-600 rounded-3xl p-8 text-white flex flex-col justify-between shadow-lg">
+            <div className="bg-gradient-to-br from-primary-600 to-primary-800 dark:from-neon-cyan dark:to-neon-teal rounded-3xl p-8 text-white dark:text-neon-darkest flex flex-col justify-between shadow-2xl">
               <div>
-                <p className="text-indigo-100 font-medium mb-1 uppercase tracking-wide text-sm">Accurate Resume Score</p>
-                <h3 className="text-6xl font-black">{unifiedResults.resumeScore}<span className="text-3xl text-indigo-300">/100</span></h3>
+                <p className="text-primary-100 dark:text-neon-darkest/70 font-bold mb-1 uppercase tracking-wide text-sm">Resume Match Score</p>
+                <h3 className="text-7xl font-black">{unifiedResults.resumeScore}<span className="text-3xl opacity-50">/100</span></h3>
               </div>
               <div className="mt-8 flex items-center justify-between">
-                <p className="text-sm text-indigo-100 max-w-[200px] leading-relaxed">Comprehensive breakdown evaluated by our ML models based on your skillset.</p>
-                <Sparkles className="h-12 w-12 text-indigo-300/50" />
+                <p className="text-sm text-primary-50 dark:text-neon-darkest/80 max-w-[200px] leading-relaxed">Evaluation based on market demand and your current trajectory.</p>
+                <Sparkles className="h-12 w-12 opacity-30 animate-pulse" />
               </div>
             </div>
 
@@ -591,7 +580,7 @@ const CareerEngine = () => {
 
         </motion.div>
       )}
-    </div>
+    </PageShell>
   );
 };
 

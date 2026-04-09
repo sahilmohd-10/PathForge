@@ -18,6 +18,7 @@ import dataRoutes from './src/server/routes/data.ts';
 import statsRoutes from './src/server/routes/stats.ts';
 import adminRoutes from './src/server/routes/admin.ts';
 import geminiRoutes from './src/server/routes/gemini.ts';
+import socialRoutes from './src/server/routes/social.ts';
 
 async function startServer() {
   try {
@@ -37,6 +38,8 @@ async function startServer() {
     app.use(cors());
     app.use(express.json({ limit: '50mb' })); // Increased limit for large imports
     app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    // Serve uploaded media files
+    app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
     // Socket.io logic
     io.on('connection', (socket) => {
@@ -65,6 +68,7 @@ async function startServer() {
     app.use('/api/data', dataRoutes);
     app.use('/api/admin', adminRoutes);
     app.use('/api', statsRoutes);
+    app.use('/api/social', socialRoutes);
 
     // Vite Integration
     if (!isProduction) {

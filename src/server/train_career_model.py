@@ -1,7 +1,10 @@
 from pathlib import Path
 
+import sys
 import pandas as pd
 
+# Ensure the current directory is in sys.path for module imports
+sys.path.append(str(Path(__file__).resolve().parent))
 from career_model_lib import CareerModel, load_dataset
 
 

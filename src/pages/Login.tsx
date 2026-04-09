@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
+import { AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const { login } = useAuth();
@@ -103,25 +104,35 @@ const Login = () => {
   }, [isRegister]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neon-dark flex items-center justify-center p-4 transition-colors duration-300">
-      <div className="max-w-md w-full bg-white dark:bg-neon-dark rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-neon-teal transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4 transition-colors duration-300 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-primary-100/50 dark:bg-primary-900/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-100/50 dark:bg-blue-900/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+
+      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-slate-200 dark:border-slate-700 transition-colors duration-300 relative z-10">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-indigo-600 dark:text-neon-cyan">PathForge</h1>
-          <p className="text-gray-500 dark:text-neon-light mt-2">
-            {isRegister ? 'Create your account' : `Sign in as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-primary-600 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">P</span>
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold text-primary-600">PathForge</h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-3 font-medium">
+            {isRegister ? 'Start your career journey' : `Welcome back, ${role.charAt(0).toUpperCase() + role.slice(1)}`}
           </p>
         </div>
 
-        {/* Role Tabs */}
-        <div className="flex p-1 bg-gray-100 dark:bg-neon-gray rounded-2xl mb-8 transition-colors duration-300">
+        {/* Role Selection Tabs */}
+        <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl mb-8 transition-all duration-300">
           {roles.map((r) => (
             <button
               key={r.id}
               onClick={() => setRole(r.id)}
-              className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${
+              className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
                 role === r.id 
-                  ? 'bg-white dark:bg-neon-cyan dark:text-neon-dark text-indigo-600 shadow-sm' 
-                  : 'text-gray-500 dark:text-neon-light hover:text-gray-700 dark:hover:text-neon-cyan'
+                  ? 'bg-primary-600 text-white shadow-lg' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               {r.label}
@@ -129,93 +140,107 @@ const Login = () => {
           ))}
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-xl text-sm">{error}</div>}
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm border border-red-200 dark:border-red-900/30 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>{error}</div>
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
           {isRegister && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-neon-cyan mb-1">Full Name</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5">Full Name</label>
               <input
                 type="text"
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200 disabled:opacity-50"
+                placeholder="John Doe"
+                className="input-base"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
               />
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-neon-cyan mb-1">Email Address</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5">Email Address</label>
             <input
               type="email"
               required
               disabled={loading}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200 disabled:opacity-50"
+              placeholder="your@email.com"
+              className="input-base"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-neon-cyan mb-1">Password</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5">Password</label>
             <input
               type="password"
               required
               disabled={loading}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200 disabled:opacity-50"
+              placeholder="••••••••"
+              className="input-base"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">At least 8 characters</p>
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-indigo-600 dark:bg-neon-cyan text-white dark:text-neon-dark rounded-xl font-semibold hover:bg-indigo-700 dark:hover:bg-neon-light transition-all shadow-lg shadow-indigo-200 dark:shadow-neon-cyan/50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary w-full mt-6"
           >
-            {loading ? 'Processing...' : (isRegister ? 'Sign Up' : 'Sign In')}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Processing...
+              </span>
+            ) : (
+              isRegister ? 'Create Account' : 'Sign In'
+            )}
           </button>
         </form>
 
-        {/* Google OAuth Button */}
-        <div className="mt-6 space-y-4">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-neon-teal"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-neon-dark text-gray-500 dark:text-neon-light">Or continue with</span>
-            </div>
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
           </div>
-
-          <div className="w-full flex justify-center bg-gray-50 dark:bg-neon-gray p-4 rounded-xl">
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <GoogleLogin
-                onSuccess={handleGoogleLoginSuccess}
-                onError={handleGoogleLoginError}
-                size="large"
-                text="signin_with"
-              />
-            </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-3 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-500 font-medium">Or continue with</span>
           </div>
-          <p className="text-xs text-center text-gray-400 dark:text-neon-light">
-            🔐 Secure OAuth authentication powered by Google
-          </p>
         </div>
 
-        <div className="mt-6 text-center">
+        {/* Google OAuth Button */}
+        <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={handleGoogleLoginError}
+              size="large"
+              text="signin_with"
+            />
+          </div>
+        </div>
+
+        {/* Toggle Form */}
+        <p className="text-center text-slate-600 dark:text-slate-400 mt-8 text-sm">
+          {isRegister ? "Already have an account? " : "Don't have an account? "}
           <button
             type="button"
-            disabled={loading}
             onClick={() => {
-              const newIsRegister = !isRegister;
-              setIsRegister(newIsRegister);
+              setIsRegister(!isRegister);
               setError('');
             }}
-            className="text-sm text-indigo-600 dark:text-neon-cyan font-medium hover:underline transition-colors duration-200 disabled:opacity-50"
+            className="font-bold text-primary-600 dark:text-primary-400 hover:underline transition-all"
           >
-            {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+            {isRegister ? 'Sign In' : 'Sign Up'}
           </button>
-        </div>
+        </p>
       </div>
     </div>
   );
