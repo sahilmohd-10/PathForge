@@ -91,6 +91,13 @@ export async function initDb() {
     }
 
     try {
+      await db.raw(`ALTER TABLE resume_data ADD COLUMN resume_url TEXT`);
+      console.log('Added resume_url column to resume_data');
+    } catch (e) {
+
+    }
+
+    try {
       await db.raw(`
         CREATE TABLE IF NOT EXISTS ollama_insights (
           id INTEGER PRIMARY KEY AUTOINCREMENT,

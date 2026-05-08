@@ -94,6 +94,7 @@ const CareerEngine = () => {
     setError(null);
     try {
       const res = await axios.post('/api/ai/upload-resume', formData);
+      console.log('📄 Backend Response:', res.data);
       const parsed = res.data.parsed;
       setResumeData(prev => ({
         ...prev,
@@ -107,7 +108,8 @@ const CareerEngine = () => {
         educationLevel: parsed.education || prev.educationLevel
       }));
     } catch (err: any) {
-      setError('Failed to parse resume. Please fill manually.');
+      const msg = err.response?.data?.error || 'Failed to parse resume. Please fill manually.';
+      setError(msg);
     } finally {
       setUploading(false);
     }

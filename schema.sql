@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS resume_data (
     extracted_json TEXT,
     resume_score INTEGER,
     suggestions TEXT,
+    resume_url TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

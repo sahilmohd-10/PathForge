@@ -365,12 +365,18 @@ Extract and return ONLY valid JSON (no markdown, no code fences):
   "resume_score": 85
 }`;
 
-    const text = await callLLM(prompt, "json");
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    } else {
-      return JSON.parse(text);
+    try {
+      const text = await callLLM(prompt, "json");
+      console.log('🤖 LLM Response for resume parsing (first 100 chars):', text.substring(0, 100));
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      } else {
+        return JSON.parse(text);
+      }
+    } catch (parseError: any) {
+      console.error('❌ Failed to parse LLM response as JSON:', parseError);
+      throw new Error(`AI parsing failed: ${parseError.message}`);
     }
   },
 

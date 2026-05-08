@@ -271,11 +271,14 @@ router.post('/upload-resume', upload.single('resume'), async (req: any, res) => 
     }
 
     if (!resumeText.trim()) {
-      return res.status(400).json({ error: 'Resume file appears to be empty or unreadable' });
+      console.warn('⚠️ Resume text extraction yielded empty string.');
+      return res.status(400).json({ error: 'Resume file appears to be empty or contains no readable text.' });
     }
 
     const { ollamaService } = await import('../ollamaService.ts');
+    console.log(`🧠 Sending ${resumeText.length} characters of resume text to AI for parsing...`);
     const parsed = await ollamaService.parseResumeText(resumeText);
+    console.log('✅ AI parsing completed successfully.');
 
     let resumeUrl = '';
     if (req.file) {
