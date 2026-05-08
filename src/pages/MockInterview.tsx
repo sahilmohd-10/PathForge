@@ -219,23 +219,24 @@ const MockInterview = () => {
         clearTimeout(silenceTimeoutRef.current);
       }
 
-      let currentInterim = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        currentInterim += event.results[i][0].transcript;
+      let fullTranscript = '';
+      for (let i = 0; i < event.results.length; ++i) {
+        fullTranscript += event.results[i][0].transcript;
       }
         
-      if (currentInterim) {
-        setInput(currentInterim);
+      if (fullTranscript.trim()) {
+        setInput(fullTranscript);
+        currentInputRef.current = fullTranscript; // Update ref immediately
         
-        // Start 4-second silence timer
+        // Start 3-second silence timer
         silenceTimeoutRef.current = setTimeout(() => {
           if (currentInputRef.current.trim() && !isGenerating) {
-            console.log('Silence detected, auto-sending message...');
+            console.log('Silence detected, auto-sending message:', currentInputRef.current);
             sendMessage(currentInputRef.current);
-            // Stop listening temporarily to avoid feedback during AI generation
-            recognition.stop();
+            // Stop listening to avoid capturing Sarah's voice or background noise
+            try { recognition.stop(); } catch (e) {}
           }
-        }, 4000);
+        }, 3000);
       }
     };
     
