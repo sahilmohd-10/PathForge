@@ -528,26 +528,34 @@ OUTPUT REQUIREMENTS:
   },
 
   async analyzeResumeATS(resumeText: string, targetRole: string): Promise<any> {
-    const prompt = `You are an expert ATS (Applicant Tracking System) algorithm and a Senior Tech Recruiter.
-Target Role: ${targetRole || 'Software Engineer'}
-Resume Text:
+    const prompt = `You are an elite ATS (Applicant Tracking System) Auditor. Analyze the provided resume text specifically for the target role of "${targetRole || 'Software Engineer'}".
+
+STRICT SCORING RUBRIC (Use this to calculate the ats_score):
+1. KEYWORD DENSITY (40%): Match technical keywords (languages, frameworks, tools) required for ${targetRole}.
+2. IMPACT & METRICS (30%): Presence of quantifiable achievements (e.g., "Increased efficiency by 20%", "Managed 10+ people").
+3. FORMATTING & PARSABILITY (15%): Is the text structured in a way an ATS can easily extract dates, titles, and companies?
+4. SKILL HIERARCHY (15%): Are the most relevant skills for ${targetRole} prominently featured?
+
+RESUME TEXT:
 ---
 ${resumeText}
 ---
 
-Your task: Perform a strict ATS parse and human recruiter review of this resume for the target role.
-1. Calculate an accurate ATS Match Score (0-100) based on keyword matching, formatting readability, and impact.
-2. Identify 3 specific bullet points or formatting issues that hurt the score.
-3. Provide 3 exact action items to fix the resume.
-4. List keywords that are completely missing.
+Your task:
+- Be brutally honest. If the resume is poor for the role, give a low score.
+- Identify "hard" missing keywords (specific technologies).
+- Provide a detailed breakdown of the score based on the rubric above.
 
-Return ONLY a valid JSON object exactly like this:
+Return ONLY a valid JSON object:
 {
-  "ats_score": <Insert an accurate integer between 0 and 100 based on the match>,
-  "overall_feedback": "A paragraph explaining why the score isn't higher.",
-  "critical_mistakes": ["Mistake 1", "Mistake 2", "Mistake 3"],
+  "ats_score": <Calculated Integer 0-100>,
+  "keyword_match_score": <0-100>,
+  "structure_score": <0-100>,
+  "impact_score": <0-100>,
+  "overall_feedback": "A high-level executive summary (3-4 sentences).",
+  "critical_mistakes": ["Point 1", "Point 2", "Point 3"],
   "actionable_improvements": ["Fix 1", "Fix 2", "Fix 3"],
-  "missing_keywords": ["Keyword 1", "Keyword 2"]
+  "missing_keywords": ["Specific Tech 1", "Specific Tech 2", "Specific Tech 3"]
 }`;
     const text = await callLLM(prompt, "json");
     const jsonMatch = text.match(/\{[\s\S]*\}/);
