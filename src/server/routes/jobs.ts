@@ -194,12 +194,24 @@ router.get('/applications/recruiter/:userId', async (req, res) => {
     const applications = await db('applications')
       .join('jobs', 'applications.job_id', 'jobs.id')
       .join('users', 'applications.user_id', 'users.id')
+      .leftJoin('resume_data', 'applications.user_id', 'resume_data.user_id')
+      .leftJoin('profiles', 'applications.user_id', 'profiles.user_id')
+      .leftJoin('mock_interviews', function() {
+        this.on('applications.user_id', '=', 'mock_interviews.user_id')
+          .andOn('applications.job_id', '=', 'mock_interviews.job_id');
+      })
       .where('jobs.posted_by', req.params.userId)
       .select(
         'applications.*',
         'jobs.title as job_title',
         'users.full_name as student_name',
-        'users.email as student_email'
+        'users.email as student_email',
+        'resume_data.raw_text as resume_text',
+        'resume_data.extracted_json as resume_json',
+        'profiles.bio as student_bio',
+        'profiles.experience_years',
+        'mock_interviews.feedback_score as interview_score',
+        'mock_interviews.feedback_details as interview_details'
       )
       .orderBy('applied_at', 'desc');
     res.json(applications);

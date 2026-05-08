@@ -457,7 +457,10 @@ router.post('/portfolio-evaluation', async (req: any, res) => {
     // const summary = `Digital Asset Score: ${evaluation.score}%. Verified Repos: ${githubData.public_repos}. Feedback: ${evaluation.top_feedback?.substring(0, 50) || 'Optimization complete'}...`;
     // await twilioService.notifyUserFeatureUsage(userId, 'Digital Asset Validation', summary);
 
-    res.json(evaluation);
+    res.json({
+      ...evaluation,
+      githubData
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message, stack: error.stack });
   }

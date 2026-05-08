@@ -504,11 +504,12 @@ STRICT AUDIT RUBRIC (Calculate score 0-100 based on this):
 CONTEXT:
 - Candidate: ${profileData?.personalInfo?.fullName || 'Candidate'}
 - Declared Skills: ${profileData?.skills ? profileData.skills.join(', ') : 'Unknown'}
-- GitHub Evidence: ${githubData ? JSON.stringify(githubData, null, 2) : 'No direct data fetched.'}
+- GitHub Metrics: ${githubData?.metrics ? JSON.stringify(githubData.metrics) : 'No metrics available.'}
+- GitHub Repos: ${githubData?.all_repos ? JSON.stringify(githubData.all_repos.slice(0, 10)) : 'No repo data fetched.'}
 
 Your task:
 - Be a "hard grader". Distinguish between tutorial projects and original engineering.
-- Analyze ALL repositories provided in the GitHub Evidence (limit to top 10 if more than 10).
+- Analyze the provided repositories and their READMEs.
 - For EACH repository, extract technical significance.
 - Provide a score that accurately reflects their recruitability at a top firm.
 

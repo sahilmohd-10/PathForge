@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Users, CheckCircle, Clock, Search, Plus, X, MapPin, DollarSign, FileText, TrendingUp, Eye, MessageCircle, AlertCircle, RefreshCw, ChevronRight, LayoutPanelTop, Star, Target, ArrowUpRight, Loader2, Zap } from 'lucide-react';
+import { Briefcase, Users, CheckCircle, Clock, Search, Plus, X, MapPin, DollarSign, FileText, TrendingUp, Eye, MessageCircle, AlertCircle, RefreshCw, ChevronRight, LayoutPanelTop, Star, Target, ArrowUpRight, Loader2, Zap, Video } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
   const { user } = useAuth();
   const [showPostModal, setShowPostModal] = useState(false);
   const [showShortlistModal, setShowShortlistModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [shortlistMessage, setShortlistMessage] = useState('');
   const [applications, setApplications] = useState<any[]>([]);
@@ -198,17 +199,15 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
                       </td>
                       <td className="py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
-                           {app.interview_details && (
-                             <button 
-                               onClick={() => {
-                                 const details = JSON.parse(app.interview_details);
-                                 alert(`SARAH'S TECHNICAL AUDIT:\n\nScore: ${details.score}%\n\nVerdict: ${details.feedback}\n\nAreas for Improvement: ${details.areas_for_improvement?.join(', ') || 'N/A'}`);
-                               }}
-                               className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-2 text-[8px] font-black uppercase"
-                             >
-                                <Zap size={12} /> View Audit
-                             </button>
-                           )}
+                           <button 
+                             onClick={() => {
+                               setSelectedApp(app);
+                               setShowProfileModal(true);
+                             }}
+                             className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all"
+                           >
+                              <Eye size={16} />
+                           </button>
                            {app.status !== 'shortlisted' && (
                             <button
                               onClick={() => {
@@ -411,10 +410,136 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
-    </div>
-  );
-};
+       </AnimatePresence>
+ 
+       {/* Candidate Profile Modal */}
+       <AnimatePresence>
+         {showProfileModal && selectedApp && (
+           <motion.div 
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-6"
+           >
+             <motion.div 
+               initial={{ scale: 0.9, y: 20 }}
+               animate={{ scale: 1, y: 0 }}
+               className="glass-card w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+             >
+               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
+                 <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-xl">
+                      {selectedApp.student_name.charAt(0)}
+                    </div>
+                    <div>
+                       <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{selectedApp.student_name}</h3>
+                       <p className="text-xs text-slate-500 font-bold">{selectedApp.student_email}</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                   <X size={24} className="text-slate-400" />
+                 </button>
+               </div>
+               
+               <div className="p-10 overflow-y-auto space-y-10">
+                 {/* Bio Section */}
+                 <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Candidate Narrative</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 font-bold leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                      {selectedApp.student_bio || "This candidate hasn't provided a professional bio yet. Use the technical audit below for evaluation."}
+                    </p>
+                 </div>
+ 
+                 {/* Stats Row */}
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Experience</p>
+                       <p className="text-sm font-black text-slate-900 dark:text-white">{selectedApp.experience_years || 0} Years</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Interview Score</p>
+                       <p className={`text-sm font-black ${selectedApp.interview_score ? 'text-emerald-500' : 'text-slate-400'}`}>
+                         {selectedApp.interview_score ? `${selectedApp.interview_score}%` : 'N/A'}
+                       </p>
+                    </div>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Role Target</p>
+                       <p className="text-sm font-black text-slate-900 dark:text-white">{selectedApp.job_title}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Status</p>
+                       <p className="text-sm font-black text-indigo-600 uppercase">{selectedApp.status}</p>
+                    </div>
+                 </div>
+ 
+                 {/* Resume Section */}
+                 <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Parsed Resume Data</h4>
+                       <button className="text-[9px] font-black text-indigo-600 flex items-center gap-1">
+                          <FileText size={12} /> View Full PDF
+                       </button>
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 h-48 overflow-y-auto whitespace-pre-wrap">
+                      {selectedApp.resume_text || "Resume content is being processed or was not uploaded correctly."}
+                    </div>
+                 </div>
+ 
+                 {/* Technical Audit (If available) */}
+                 {selectedApp.interview_details && (
+                   <div className="space-y-4">
+                      <h4 className="text-[10px] font-black text-[#0081C9] uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Zap size={14} /> AI Technical Audit Verdict
+                      </h4>
+                      <div className="p-6 bg-blue-50/50 dark:bg-[#0081C9]/5 rounded-3xl border border-blue-100 dark:border-[#0081C9]/20">
+                         <p className="text-sm font-bold text-slate-800 dark:text-slate-200 italic mb-4">
+                           "{JSON.parse(selectedApp.interview_details).feedback}"
+                         </p>
+                         <div className="flex flex-wrap gap-2">
+                            {(JSON.parse(selectedApp.interview_details).strengths || []).map((s: string, i: number) => (
+                               <span key={i} className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] font-black uppercase rounded-lg">+{s}</span>
+                            ))}
+                         </div>
+                      </div>
+                   </div>
+                 )}
+               </div>
+ 
+               <div className="p-8 border-t border-slate-100 dark:border-slate-800 flex gap-4 bg-slate-50/50 dark:bg-slate-950/50">
+                 <button 
+                   onClick={async () => {
+                     try {
+                       await axios.post(`/api/jobs/applications/${selectedApp.id}/request-interview`);
+                       alert("Interview formal request sent to candidate.");
+                       setShowProfileModal(false);
+                       fetchRecruiterData();
+                     } catch (err) {
+                       alert("Failed to request interview.");
+                     }
+                   }}
+                   className="flex-1 py-4 bg-[#0081C9] text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-[#0070B0] transition-all shadow-lg shadow-blue-500/20"
+                 >
+                   <Video size={18} /> Propose Technical Interview
+                 </button>
+                 <button 
+                   onClick={() => {
+                     setShowProfileModal(false);
+                     setSelectedApp(selectedApp);
+                     setShortlistMessage(`Congratulations! You have been shortlisted for the ${selectedApp.job_title} position.`);
+                     setShowShortlistModal(true);
+                   }}
+                   className="flex-1 py-4 bg-[#0F172A] text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-black transition-all"
+                 >
+                   <Target size={18} /> Finalize Shortlist
+                 </button>
+               </div>
+             </motion.div>
+           </motion.div>
+         )}
+       </AnimatePresence>
+     </div>
+   );
+ };
 
 const MetricCard = ({ title, value, icon, trend, color }: any) => {
   const colors: any = {

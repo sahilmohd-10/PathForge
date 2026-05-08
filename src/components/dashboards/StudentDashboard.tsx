@@ -97,13 +97,28 @@ const StudentDashboard = ({ profile }: any) => {
                       <p className="text-[11px] font-bold text-slate-500">{app.company_name || app.company} • {app.job_location || app.location}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="px-3 py-1 bg-white border border-slate-200 text-[10px] font-black uppercase rounded-lg">
-                      {app.status}
-                    </span>
-                    <p className="text-[10px] font-bold text-slate-400 mt-2">
-                      {new Date(app.applied_at || app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </p>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="text-right">
+                      <span className={`px-3 py-1 border text-[10px] font-black uppercase rounded-lg ${
+                        app.status === 'shortlisted' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-white border-slate-200 text-slate-500'
+                      }`}>
+                        {app.status}
+                      </span>
+                      <p className="text-[10px] font-bold text-slate-400 mt-1">
+                        {new Date(app.applied_at || app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                    {app.status !== 'rejected' && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.hash = `mockinterview?jobId=${app.job_id}&role=${encodeURIComponent(app.job_title)}`;
+                        }}
+                        className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-2 hover:bg-black transition-all"
+                      >
+                        <Video size={12} /> Interview
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

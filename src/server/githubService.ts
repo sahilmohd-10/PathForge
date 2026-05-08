@@ -8,9 +8,7 @@ export const githubService = {
     }
 
     try {
-        let username = githubUrl.trim();
-        username = username.replace(/\/+$/, '');
-        
+        let username = githubUrl.trim().replace(/\/+$/, '');
         if (username.includes('github.com/')) {
             const parts = username.split('github.com/');
             const pathParts = parts[1].split('/');
@@ -21,62 +19,95 @@ export const githubService = {
 
         if (!username || username === 'github.com') return null;
 
+        // Step 1 — Get User Information
         const userRes = await fetch(`https://api.github.com/users/${username}`, { headers });
         if (!userRes.ok) return null;
-        
         const userData = await userRes.json();
 
-        const reposRes = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=50`, { headers });
-        if (!reposRes.ok) return { username, public_repos_count: 0, all_repos: [] };
-        
+        // Step 2 — Fetch Repositories
+        const reposRes = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30`, { headers });
+        if (!reposRes.ok) return null;
         const repos = await reposRes.json();
+
+        // Step 3 — Analyze Repository Data & Metrics
+        let totalStars = 0;
+        let totalForks = 0;
+        const languageCounts: any = {};
         const parsedRepos = [];
 
-        for (const repo of repos) {
+        for (const repo of repos.slice(0, 15)) { // Limit to top 15 for depth
+            totalStars += repo.stargazers_count;
+            totalForks += repo.forks_count;
+
+            // Step 4 — Analyze Languages (Detailed)
+            let languages = {};
+            try {
+                const langRes = await fetch(`https://api.github.com/repos/${username}/${repo.name}/languages`, { headers });
+                if (langRes.ok) languages = await langRes.json();
+            } catch (e) {}
+
+            // Step 5 — Analyze Commits/Activity
+            let recentCommits = 0;
+            try {
+                const commitRes = await fetch(`https://api.github.com/repos/${username}/${repo.name}/commits?per_page=10`, { headers });
+                if (commitRes.ok) {
+                    const commits = await commitRes.json();
+                    recentCommits = Array.isArray(commits) ? commits.length : 0;
+                }
+            } catch (e) {}
+
+            // Fetch README for AI context
             let readme = '';
-            let commitCount = 0;
-            
             try {
                 const readmeRes = await fetch(`https://api.github.com/repos/${username}/${repo.name}/readme`, {
                     headers: { ...headers, 'Accept': 'application/vnd.github.v3.raw' }
                 });
-                if (readmeRes.ok) {
-                    const text = await readmeRes.text();
-                    readme = text.substring(0, 500);
-                }
-
-                // Get some commit activity for "consistency" metric
-                const activityRes = await fetch(`https://api.github.com/repos/${username}/${repo.name}/stats/commit_activity`, { headers });
-                if (activityRes.ok) {
-                    const activity = await activityRes.json();
-                    if (Array.isArray(activity)) {
-                        commitCount = activity.reduce((acc: number, week: any) => acc + week.total, 0);
-                    }
-                }
+                if (readmeRes.ok) readme = (await readmeRes.text()).substring(0, 600);
             } catch (e) {}
 
             parsedRepos.push({
                 name: repo.name,
                 description: repo.description,
-                language: repo.language,
                 stars: repo.stargazers_count,
                 forks: repo.forks_count,
-                topics: repo.topics || [],
-                updated_at: repo.updated_at,
-                commit_activity_total: commitCount,
-                readme_snippet: readme
+                primary_language: repo.language,
+                all_languages: languages,
+                recent_commits_count: recentCommits,
+                readme_snippet: readme,
+                url: repo.html_url
             });
         }
 
+        // Additional: Step 6 — Analyze Events (Heatmap/Consistency)
+        let eventActivity = 0;
+        try {
+            const eventRes = await fetch(`https://api.github.com/users/${username}/events`, { headers });
+            if (eventRes.ok) {
+                const events = await eventRes.json();
+                eventActivity = Array.isArray(events) ? events.length : 0;
+            }
+        } catch (e) {}
+
         return {
-            username,
-            bio: userData.bio,
-            public_repos_count: userData.public_repos,
-            followers: userData.followers,
+            profile: {
+                username: userData.login,
+                name: userData.name,
+                bio: userData.bio,
+                public_repos: userData.public_repos,
+                followers: userData.followers,
+                created_at: userData.created_at,
+                avatar_url: userData.avatar_url
+            },
+            metrics: {
+                total_stars: totalStars,
+                total_forks: totalForks,
+                event_activity_score: eventActivity,
+                top_repos_analyzed: parsedRepos.length
+            },
             all_repos: parsedRepos
         };
     } catch (err) {
-        console.error('Failed to parse github:', err);
+        console.error('GitHub Deep Audit Failed:', err);
         return null;
     }
   }
