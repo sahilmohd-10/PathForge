@@ -1,6 +1,7 @@
 import express from 'express';
 import db from '../db.ts';
-import { fetchAdzunaJobs, searchAdzunaJobs, ProcessedJob } from '../adzunaService.ts';
+import { fetchAdzunaJobs, searchAdzunaJobs } from '../adzunaService.ts';
+import type { ProcessedJob } from '../adzunaService.ts';
 
 const router = express.Router();
 

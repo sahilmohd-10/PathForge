@@ -220,9 +220,4 @@ export async function getAdzunaCategories(country: string = 'us'): Promise<any> 
   }
 }
 
-export default {
-  fetchAdzunaJobs,
-  searchAdzunaJobs,
-  processAdzunaJob,
-  getAdzunaCategories
-};
+// No default export to avoid ESM conflicts
