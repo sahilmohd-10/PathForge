@@ -274,7 +274,7 @@ Provide a highly accurate and critical comprehensive analysis. You MUST return e
 - 5 actionable areas of improvement
 - 5 items in the profile breakdown
 - 5 specific skill gaps
-- 5 recommended online courses
+- 8 recommended online courses with AUTHENTIC, WORKING URLs (e.g., Coursera, Udemy, edX, or official documentation)
 - 10 eligible job positions
 
 Return ONLY valid JSON (no markdown):
@@ -305,7 +305,7 @@ Return ONLY valid JSON (no markdown):
       "name": "Course Name",
       "platform": "Coursera/Udemy",
       "duration": "8 weeks",
-      "link": "https://example.com"
+      "link": "https://www.coursera.org/learn/specific-course-slug"
     }
   ],
   "eligible_positions": [

@@ -410,52 +410,7 @@ const CareerEngine = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-                <h4 className="text-sm font-black text-[#0f172a] mb-6 flex items-center gap-2">
-                  <Code className="text-[#0081C9]" size={16} /> Tech Stack Benchmark
-                </h4>
-                
-                <div className="h-[250px] w-full mb-6">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
-                      { subject: 'Architecture', A: 85, fullMark: 100 },
-                      { subject: 'DevOps', A: 70, fullMark: 100 },
-                      { subject: 'Frontend', A: 90, fullMark: 100 },
-                      { subject: 'Backend', A: 85, fullMark: 100 },
-                      { subject: 'Security', A: 65, fullMark: 100 },
-                      { subject: 'Testing', A: 80, fullMark: 100 },
-                    ]}>
-                      <PolarGrid stroke="#f1f5f9" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                      <Radar
-                        name="Skills"
-                        dataKey="A"
-                        stroke="#0081C9"
-                        fill="#0081C9"
-                        fillOpacity={0.15}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    <span>Vector Alignment</span>
-                    <span className="text-blue-500">{(unifiedResults.mlPredictions.market_fit_score || 88)}% OPTIMIZED</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${unifiedResults.mlPredictions.market_fit_score || 88}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600" 
-                    />
-                  </div>
-                  <p className="text-[10px] font-medium text-slate-500 leading-relaxed">
-                    Your multi-dimensional toolset aligns with {unifiedResults.mlPredictions.market_fit_score || 88}% of industry standards for {unifiedResults.predictedRole}.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
