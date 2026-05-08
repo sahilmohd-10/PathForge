@@ -3,6 +3,8 @@ import { aiService } from '../aiService.ts';
 import db from '../db.ts';
 import multer from 'multer';
 import { twilioService } from '../twilioService.ts';
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -275,6 +277,15 @@ router.post('/upload-resume', upload.single('resume'), async (req: any, res) => 
     const { ollamaService } = await import('../ollamaService.ts');
     const parsed = await ollamaService.parseResumeText(resumeText);
 
+    let resumeUrl = '';
+    if (req.file) {
+      const fileName = `resume_${parsedUserId}_${Date.now()}${path.extname(req.file.originalname)}`;
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, req.file.buffer);
+      resumeUrl = `/uploads/${fileName}`;
+    }
 
     await db('resume_data').insert({
       user_id: parsedUserId,
@@ -282,6 +293,7 @@ router.post('/upload-resume', upload.single('resume'), async (req: any, res) => 
       extracted_json: JSON.stringify(parsed),
       resume_score: parsed.resume_score || 0,
       suggestions: parsed.career_goal || '',
+      resume_url: resumeUrl,
       updated_at: new Date()
     }).onConflict('user_id').merge();
 

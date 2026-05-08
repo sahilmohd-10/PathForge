@@ -476,7 +476,16 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Parsed Resume Data</h4>
-                       <button className="text-[9px] font-black text-indigo-600 flex items-center gap-1">
+                       <button 
+                         onClick={() => {
+                           if (selectedApp.resume_url) {
+                             window.open(selectedApp.resume_url, '_blank');
+                           } else {
+                             alert("Original PDF file is not available for this candidate. Only parsed text is available.");
+                           }
+                         }}
+                         className="text-[9px] font-black text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                       >
                           <FileText size={12} /> View Full PDF
                        </button>
                     </div>

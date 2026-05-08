@@ -208,6 +208,7 @@ router.get('/applications/recruiter/:userId', async (req, res) => {
         'users.email as student_email',
         'resume_data.raw_text as resume_text',
         'resume_data.extracted_json as resume_json',
+        'resume_data.resume_url',
         'profiles.bio as student_bio',
         'profiles.experience_years',
         'mock_interviews.feedback_score as interview_score',
