@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Users, CheckCircle, Clock, Search, Plus, X, MapPin, DollarSign, FileText, TrendingUp, Eye, MessageCircle, AlertCircle, RefreshCw, ChevronRight, LayoutPanelTop, Star, Target, ArrowUpRight, Loader2 } from 'lucide-react';
+import { Briefcase, Users, CheckCircle, Clock, Search, Plus, X, MapPin, DollarSign, FileText, TrendingUp, Eye, MessageCircle, AlertCircle, RefreshCw, ChevronRight, LayoutPanelTop, Star, Target, ArrowUpRight, Loader2, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -177,7 +177,15 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
                       </td>
                       <td className="py-5">
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{app.job_title}</p>
-                        <p className="text-[8px] text-slate-400 uppercase tracking-widest font-black mt-1">Application Sync'd</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {app.interview_score ? (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md border border-emerald-100 text-[8px] font-black uppercase">
+                              <Star size={8} /> Interview Score: {app.interview_score}%
+                            </div>
+                          ) : (
+                            <p className="text-[8px] text-slate-400 uppercase tracking-widest font-black">Waiting for Interview</p>
+                          )}
+                        </div>
                       </td>
                       <td className="py-5">
                         <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest inline-block ${
@@ -190,9 +198,17 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
                       </td>
                       <td className="py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
-                           <button className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                              <Eye size={16} />
-                           </button>
+                           {app.interview_details && (
+                             <button 
+                               onClick={() => {
+                                 const details = JSON.parse(app.interview_details);
+                                 alert(`SARAH'S TECHNICAL AUDIT:\n\nScore: ${details.score}%\n\nVerdict: ${details.feedback}\n\nAreas for Improvement: ${details.areas_for_improvement?.join(', ') || 'N/A'}`);
+                               }}
+                               className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-2 text-[8px] font-black uppercase"
+                             >
+                                <Zap size={12} /> View Audit
+                             </button>
+                           )}
                            {app.status !== 'shortlisted' && (
                             <button
                               onClick={() => {
@@ -200,7 +216,7 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
                                 setShortlistMessage(`Congratulations! You have been shortlisted for the ${app.job_title} position.`);
                                 setShowShortlistModal(true);
                               }}
-                              className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-400 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
+                              className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-400 transition-all shadow-xl"
                             >
                               Shortlist
                             </button>
