@@ -119,27 +119,31 @@ const ProjectAnalysis = () => {
                 <Rocket className="text-[#0081C9]" size={28} /> Project Showroom
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {(evaluation.projects && evaluation.projects.length > 0 ? evaluation.projects : [
-                  {
-                    name: "Sample Engineering Project",
-                    overview: "A demonstration of high-complexity architecture including microservices and real-time data sync. (No public repos detected for analysis)",
-                    tools_used: ["React", "Node.js", "Redis"],
-                  }
-                ]).map((project: any, i: number) => (
+                {(evaluation.projects && evaluation.projects.length > 0 && evaluation.projects[0].name !== 'Unknown' 
+                  ? evaluation.projects 
+                  : (evaluation.githubData?.all_repos || []).map((r: any) => ({
+                      name: r.name,
+                      overview: r.description || 'No description provided.',
+                      tools_used: r.language ? [r.language] : [],
+                      is_raw: true
+                    }))
+                ).slice(0, 10).map((project: any, i: number) => (
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
                     key={i} 
-                    className="group bg-slate-50 rounded-[28px] p-8 border border-slate-100 hover:border-[#0081C9]/30 hover:bg-white hover:shadow-xl transition-all"
+                    className="group bg-slate-50 rounded-[28px] p-8 border border-slate-100 hover:border-[#0081C9]/30 hover:bg-white hover:shadow-xl transition-all flex flex-col"
                   >
                     <div className="flex justify-between items-start mb-4">
-                      <h5 className="text-lg font-black text-[#0f172a] group-hover:text-[#0081C9] transition-colors">{project.name}</h5>
-                      <span className="px-3 py-1 bg-[#0081C9]/10 text-[#0081C9] text-[9px] font-black uppercase rounded-full">
-                        {evaluation.projects?.length > 0 ? 'Project Verified' : 'Demo Blueprint'}
+                      <h5 className="text-lg font-black text-[#0f172a] group-hover:text-[#0081C9] transition-colors line-clamp-1">{project.name}</h5>
+                      <span className={`px-3 py-1 text-[9px] font-black uppercase rounded-full ${
+                        project.is_raw ? 'bg-slate-200 text-slate-600' : 'bg-[#0081C9]/10 text-[#0081C9]'
+                      }`}>
+                        {project.is_raw ? 'Repo Detected' : 'Project Verified'}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 font-bold mb-6 leading-relaxed">
+                    <p className="text-xs text-slate-500 font-bold mb-6 leading-relaxed line-clamp-3">
                       {project.overview}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-auto">
@@ -151,6 +155,11 @@ const ProjectAnalysis = () => {
                     </div>
                   </motion.div>
                 ))}
+                {(!evaluation.projects || evaluation.projects.length === 0) && (!evaluation.githubData?.all_repos || evaluation.githubData.all_repos.length === 0) && (
+                  <div className="col-span-full p-12 bg-slate-50 rounded-[32px] text-center border-2 border-dashed border-slate-200">
+                    <p className="text-slate-400 font-bold">No public repositories found for this account.</p>
+                  </div>
+                )}
               </div>
             </div>
 

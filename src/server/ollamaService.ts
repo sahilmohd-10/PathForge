@@ -508,7 +508,8 @@ CONTEXT:
 
 Your task:
 - Be a "hard grader". Distinguish between tutorial projects and original engineering.
-- Identify the "Real World Value" of their top repositories.
+- Analyze ALL repositories provided in the GitHub Evidence (limit to top 10 if more than 10).
+- For EACH repository, extract technical significance.
 - Provide a score that accurately reflects their recruitability at a top firm.
 
 Return ONLY a valid JSON object:
@@ -518,10 +519,10 @@ Return ONLY a valid JSON object:
   "technical_depth_analysis": "Detailed analysis of their architectural patterns and code complexity.",
   "projects": [
     {
-      "name": "Project Name",
-      "overview": "Brief technical overview.",
-      "tools_used": ["React", "TypeScript"],
-      "impact": "Technical complexity or real-world impact."
+      "name": "Exact Repository Name",
+      "overview": "Clear technical overview of what this project actually does.",
+      "tools_used": ["React", "TypeScript", "Tailwind"],
+      "impact": "Verification of technical difficulty or impact."
     }
   ],
   "proof_of_work_status": "Status (e.g. Verified Engineer / Tutorial Hell / Rising Talent)",
