@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import PageShell from '../components/PageShell';
-import { Github, Loader2, CheckCircle2, AlertCircle, Sparkles, Code2, Rocket, Globe, Cpu, Zap, Target, Layout, ChevronRight, FileDown } from 'lucide-react';
+import { Github, Loader2, CheckCircle2, AlertCircle, Sparkles, Code2, Rocket, Globe, Cpu, Zap, Target, Layout, ChevronRight, FileDown, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TwilioShare from '../components/TwilioShare';
 
@@ -106,13 +106,14 @@ const ProjectAnalysis = () => {
               </div>
             </div>
 
-            {/* Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <MetricBox label="CODE QUALITY" value="88%" icon={<Code2 className="text-blue-500" />} />
-              <MetricBox label="ARCHITECTURE" value="82%" icon={<Layout className="text-emerald-500" />} />
-              <MetricBox label="PROOF OF WORK" value="94%" icon={<Target className="text-indigo-500" />} />
+             {/* Metrics Row */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <MetricBox label="TOTAL STARS" value={evaluation.githubData?.metrics?.total_stars || 0} icon={<Star size={20} className="text-amber-500" />} />
+              <MetricBox label="TOTAL FORKS" value={evaluation.githubData?.metrics?.total_forks || 0} icon={<Github size={20} className="text-slate-500" />} />
+              <MetricBox label="EVENT ACTIVITY" value={evaluation.githubData?.metrics?.event_activity_score || 0} icon={<Zap size={20} className="text-blue-500" />} />
+              <MetricBox label="REPOS AUDITED" value={evaluation.githubData?.metrics?.top_repos_analyzed || 0} icon={<Target size={20} className="text-emerald-500" />} />
             </div>
-
+ 
             {/* Project Showroom */}
             <div id="project-showroom" className="bg-white rounded-[32px] p-10 border border-slate-100 shadow-sm">
               <h4 className="text-2xl font-black text-[#0f172a] mb-10 flex items-center gap-4">
@@ -124,10 +125,12 @@ const ProjectAnalysis = () => {
                   : (evaluation.githubData?.all_repos || []).map((r: any) => ({
                       name: r.name,
                       overview: r.description || 'No description provided.',
-                      tools_used: r.language ? [r.language] : [],
+                      tools_used: r.primary_language ? [r.primary_language] : [],
+                      stars: r.stars,
+                      forks: r.forks,
                       is_raw: true
                     }))
-                ).slice(0, 10).map((project: any, i: number) => (
+                ).slice(0, 15).map((project: any, i: number) => (
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -136,7 +139,13 @@ const ProjectAnalysis = () => {
                     className="group bg-slate-50 rounded-[28px] p-8 border border-slate-100 hover:border-[#0081C9]/30 hover:bg-white hover:shadow-xl transition-all flex flex-col"
                   >
                     <div className="flex justify-between items-start mb-4">
-                      <h5 className="text-lg font-black text-[#0f172a] group-hover:text-[#0081C9] transition-colors line-clamp-1">{project.name}</h5>
+                      <div className="flex flex-col">
+                        <h5 className="text-lg font-black text-[#0f172a] group-hover:text-[#0081C9] transition-colors line-clamp-1">{project.name}</h5>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400"><Star size={10} /> {project.stars || 0}</span>
+                          <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400"><Github size={10} /> {project.forks || 0}</span>
+                        </div>
+                      </div>
                       <span className={`px-3 py-1 text-[9px] font-black uppercase rounded-full ${
                         project.is_raw ? 'bg-slate-200 text-slate-600' : 'bg-[#0081C9]/10 text-[#0081C9]'
                       }`}>
