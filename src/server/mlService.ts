@@ -4,7 +4,8 @@ import path from 'path';
 export const mlService = {
   async predict(profileData: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python', [
+      const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+      const pythonProcess = spawn(pythonCmd, [
         path.join(process.cwd(), 'src', 'server', 'career_model_inference.py')
       ]);
 
