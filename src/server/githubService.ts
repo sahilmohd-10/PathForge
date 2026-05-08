@@ -2,21 +2,38 @@ export const githubService = {
   async parseGithubProfile(githubUrl: string) {
     if (!githubUrl) return null;
     try {
-        let username = '';
-        if (githubUrl.includes('github.com/')) {
-            const parts = githubUrl.split('github.com/');
-            username = parts[1].split('/')[0];
-        } else {
-            username = githubUrl.trim();
+        let username = githubUrl.trim();
+        
+        // Remove trailing slashes
+        username = username.replace(/\/+$/, '');
+        
+        if (username.includes('github.com/')) {
+            const parts = username.split('github.com/');
+            const pathParts = parts[1].split('/');
+            username = pathParts[0] === '' ? pathParts[1] : pathParts[0];
+        } else if (username.startsWith('@')) {
+            username = username.substring(1);
         }
 
-        if (!username) return null;
+        if (!username || username === 'github.com') return null;
 
-        const reposRes = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30`, {
+        // Check if user exists and get total repo count
+        const userRes = await fetch(`https://api.github.com/users/${username}`, {
             headers: { 'User-Agent': 'PathForge-Agent' }
         });
         
-        if (!reposRes.ok) return null;
+        if (!userRes.ok) {
+            console.warn(`GitHub user ${username} not found or rate limited.`);
+            return null;
+        }
+        
+        const userData = await userRes.json();
+
+        const reposRes = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=100`, {
+            headers: { 'User-Agent': 'PathForge-Agent' }
+        });
+        
+        if (!reposRes.ok) return { username, public_repos_count: 0, all_repos: [] };
         
         const repos = await reposRes.json();
         const parsedRepos = [];
