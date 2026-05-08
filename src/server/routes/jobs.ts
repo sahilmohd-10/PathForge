@@ -99,7 +99,7 @@ router.get('/search', async (req, res) => {
       return res.status(400).json({ error: 'Keywords parameter is required' });
     }
 
-    let adzunaData = { results: [], count: 0 };
+    let adzunaData: { results: ProcessedJob[], count: number } = { results: [], count: 0 };
     try {
       adzunaData = await searchAdzunaJobs(country, keywords, page, limit);
     } catch (e) {
