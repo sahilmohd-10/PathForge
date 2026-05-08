@@ -212,7 +212,9 @@ router.get('/applications/recruiter/:userId', async (req, res) => {
         'profiles.bio as student_bio',
         'profiles.experience_years',
         'mock_interviews.feedback_score as interview_score',
-        'mock_interviews.feedback_details as interview_details'
+        'mock_interviews.feedback_details as interview_details',
+        'applications.interview_offered',
+        'applications.interview_completed'
       )
       .orderBy('applied_at', 'desc');
     res.json(applications);
@@ -247,7 +249,7 @@ router.post('/applications/:id/request-interview', async (req, res) => {
 
     if (!application) return res.status(404).json({ error: 'Application not found' });
 
-    await db('applications').where({ id: req.params.id }).update({ status: 'shortlisted' });
+    await db('applications').where({ id: req.params.id }).update({ interview_offered: 1 });
 
     const interviewRequestMsg = `Hello! We've reviewed your application for the ${application.job_title} position and would like to invite you to a Mock Interview on our platform to evaluate your technical skills. Please go to the Mock Interview section and select this job role to begin.`;
 
@@ -337,7 +339,9 @@ router.get('/applications/student/:userId', async (req, res) => {
         'jobs.title as job_title',
         'jobs.company as company_name',
         'jobs.location as job_location',
-        'jobs.external_url'
+        'jobs.external_url',
+        'applications.interview_offered',
+        'applications.interview_completed'
       )
       .orderBy('applied_at', 'desc');
     res.json(applications);

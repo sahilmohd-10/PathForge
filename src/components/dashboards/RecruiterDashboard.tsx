@@ -179,12 +179,16 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
                       <td className="py-5">
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{app.job_title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          {app.interview_score ? (
+                          {app.interview_completed === 1 ? (
                             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md border border-emerald-100 text-[8px] font-black uppercase">
-                              <Star size={8} /> Interview Score: {app.interview_score}%
+                              <CheckCircle size={8} /> Interview Complete: {app.interview_score || 0}%
+                            </div>
+                          ) : app.interview_offered === 1 ? (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100 text-[8px] font-black uppercase">
+                              <Clock size={8} /> Interview Offered
                             </div>
                           ) : (
-                            <p className="text-[8px] text-slate-400 uppercase tracking-widest font-black">Waiting for Interview</p>
+                            <p className="text-[8px] text-slate-400 uppercase tracking-widest font-black">Waiting for Decision</p>
                           )}
                         </div>
                       </td>
@@ -516,7 +520,8 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
  
                <div className="p-8 border-t border-slate-100 dark:border-slate-800 flex gap-4 bg-slate-50/50 dark:bg-slate-950/50">
                  <button 
-                   onClick={async () => {
+                                       onClick={async () => {
+                      if (selectedApp.interview_offered === 1) return;
                      try {
                        await axios.post(`/api/jobs/applications/${selectedApp.id}/request-interview`);
                        alert("Interview formal request sent to candidate.");
@@ -526,9 +531,10 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
                        alert("Failed to request interview.");
                      }
                    }}
-                   className="flex-1 py-4 bg-[#0081C9] text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-[#0070B0] transition-all shadow-lg shadow-blue-500/20"
+                                       disabled={selectedApp.interview_offered === 1}
+                    className={`flex-1 py-4 ${selectedApp.interview_offered === 1 ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-[#0081C9] text-white hover:bg-[#0070B0] shadow-lg shadow-blue-500/20'} font-black rounded-2xl flex items-center justify-center gap-2 transition-all`}
                  >
-                   <Video size={18} /> Propose Technical Interview
+                                       <Video size={18} /> {selectedApp.interview_offered === 1 ? 'Interview Offered' : 'Propose Technical Interview'}
                  </button>
                  <button 
                    onClick={() => {

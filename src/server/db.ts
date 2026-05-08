@@ -77,6 +77,20 @@ export async function initDb() {
 
 
     try {
+      await db.raw(`ALTER TABLE applications ADD COLUMN interview_offered INTEGER DEFAULT 0`);
+      console.log('Added interview_offered column');
+    } catch (e) {
+
+    }
+
+    try {
+      await db.raw(`ALTER TABLE applications ADD COLUMN interview_completed INTEGER DEFAULT 0`);
+      console.log('Added interview_completed column');
+    } catch (e) {
+
+    }
+
+    try {
       await db.raw(`
         CREATE TABLE IF NOT EXISTS ollama_insights (
           id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -381,6 +381,7 @@ router.post('/mock-interview', async (req: any, res) => {
         feedback_score: feedback.score,
         feedback_details: JSON.stringify(feedback)
       });
+      if (jobId) await db('applications').where({ user_id: userId, job_id: jobId }).update({ interview_completed: 1 });
     // if (userId) {
     //   const summary = `Evaluation Score: ${feedback.score}%. Summary Insight: ${feedback.feedback.substring(0, 70)}...`;
     //   await twilioService.notifyUserFeatureUsage(userId, 'Interview Intelligence', summary);
