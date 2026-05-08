@@ -208,6 +208,58 @@ router.get('/applications/recruiter/:userId', async (req, res) => {
   }
 });
 
+router.get('/applications/:id/interview-results', async (req, res) => {
+  try {
+    const application = await db('applications').where({ id: req.params.id }).first();
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+    
+    const results = await db('mock_interviews')
+      .where({ user_id: application.user_id, job_id: application.job_id })
+      .orderBy('created_at', 'desc')
+      .first();
+      
+    res.json(results || null);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/applications/:id/request-interview', async (req, res) => {
+  try {
+    const application = await db('applications')
+      .join('jobs', 'applications.job_id', 'jobs.id')
+      .where('applications.id', req.params.id)
+      .select('applications.*', 'jobs.title as job_title', 'jobs.posted_by')
+      .first();
+
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+
+    await db('applications').where({ id: req.params.id }).update({ status: 'shortlisted' });
+
+    const interviewRequestMsg = `Hello! We've reviewed your application for the ${application.job_title} position and would like to invite you to a Mock Interview on our platform to evaluate your technical skills. Please go to the Mock Interview section and select this job role to begin.`;
+
+    await db('messages').insert({
+      sender_id: application.posted_by,
+      receiver_id: application.user_id,
+      content: interviewRequestMsg,
+      context_type: 'application',
+      context_id: application.id,
+      is_read: false
+    });
+
+    await db('notifications').insert({
+      user_id: application.user_id,
+      title: 'Interview Requested',
+      message: `A recruiter has requested a mock interview for the ${application.job_title} role.`,
+      type: 'info'
+    });
+
+    res.json({ message: 'Interview requested and candidate notified' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/applications/:id/shortlist', async (req, res) => {
   const { message } = req.body;
   try {

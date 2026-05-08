@@ -7,6 +7,8 @@ import { FaceMesh } from '@mediapipe/face_mesh';
 import { motion, AnimatePresence } from 'framer-motion';
 import TwilioShare from '../components/TwilioShare';
 
+import { useSearchParams } from 'react-router-dom';
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -14,7 +16,10 @@ interface Message {
 
 const MockInterview = () => {
   const { user } = useAuth();
-  const [jobRole, setJobRole] = useState('');
+  const [searchParams] = useSearchParams();
+  const initialJobId = searchParams.get('jobId');
+  const [jobId, setJobId] = useState<string | null>(initialJobId);
+  const [jobRole, setJobRole] = useState(searchParams.get('role') || '');
   const [isStarted, setIsStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -148,7 +153,7 @@ const MockInterview = () => {
     window.speechSynthesis.cancel();
     try {
       const transcript = messages.map(m => `${m.role === 'assistant' ? 'Interviewer' : 'Candidate'}: ${m.content}`).join('\n\n');
-      const response = await axios.post('/api/ai/mock-interview', { userId: user?.id, jobRole, transcript });
+      const response = await axios.post('/api/ai/mock-interview', { userId: user?.id, jobRole, transcript, jobId });
       setScorecard(response.data);
     } catch (err) {
       console.error(err);

@@ -427,8 +427,19 @@ Guidelines:
   },
 
   async generateNextInterviewQuestion(jobRole: string, transcript: string): Promise<any> {
-    const prompt = `You are an elite technical interviewer hiring for a ${jobRole} position.
-Analyze the following interview transcript. Focus specifically on the LAST response from the Candidate.
+    const prompt = `You are a Senior Principal Engineer conducting a technical interview for a ${jobRole} position.
+Analyze the following interview transcript. Evaluate the Candidate's LAST response with extreme technical precision.
+
+SEMANTIC ACCURACY ALGORITHM (Calculate accuracyScore 0-100):
+1. FACTUAL CORRECTNESS (40%): Core concept accuracy.
+2. TECHNICAL DEPTH (30%): "How/Why" explanation.
+3. TERMINOLOGY (15%): Use of industry terms.
+4. CONTEXTUAL NUANCE (15%): Edge cases/trade-offs.
+
+CRITICAL INSTRUCTION: 
+- If the candidate makes an effort but is slightly off, do NOT give 0%. Give partial credit (e.g., 30-50%).
+- Only give 0% if the response is completely irrelevant or "I don't know".
+- If the candidate is 100% correct, give 100%.
 
 Transcript:
 ---
@@ -436,18 +447,17 @@ ${transcript || '(Interview just started)'}
 ---
 
 Your task:
-1. Evaluate if the Candidate's LAST answer was technically correct and sufficient.
-2. Provide a short verdict (e.g., "That's exactly right!" or "Actually, that's not quite correct.").
-3. Calculate an 'accuracyScore' between 0 and 100 based on the technical correctness and completeness of the LAST response.
-4. Provide the CORRECT answer or a more complete explanation in VERY EASY, simple language that a beginner can understand. This is the 'idealAnswer'.
-5. Formulate the NEXT highly specific technical or scenario-based question for the ${jobRole} position.
+1. Be strict but fair.
+2. If the candidate is wrong about a specific term but correct about the concept, correct them in the 'feedback' but give partial accuracy credit.
+3. Provide an 'idealAnswer' that is technical but easy to grasp.
+4. Formulate the NEXT question to dive deeper.
 
-Return ONLY a valid JSON object matching this structure:
+Return ONLY a valid JSON object:
 {
   "isCorrect": true/false,
-  "accuracyScore": 85,
-  "feedback": "Short right/wrong message",
-  "idealAnswer": "The perfectly correct answer explained simply",
+  "accuracyScore": <Calculated Integer 0-100>,
+  "feedback": "Concise technical feedback on the last answer",
+  "idealAnswer": "The perfectly correct answer explained clearly",
   "nextQuestion": "The next technical question for the candidate"
 }`;
     const text = await callLLM(prompt, "json");
@@ -456,19 +466,26 @@ Return ONLY a valid JSON object matching this structure:
   },
 
   async generateMockInterviewFeedback(jobRole: string, transcript: string): Promise<any> {
-    const prompt = `You are a strict, senior technical interviewer at a top-tier tech company.
+    const prompt = `You are a Technical Hiring Manager at a Tier-1 tech company.
 Job Role: ${jobRole}
 Interview Transcript:
 ---
 ${transcript}
 ---
 
-Evaluate the candidate's responses. Check for technical accuracy, clarity of thought, problem-solving skills, and communication.
-Return ONLY a valid JSON object matching this exact structure:
+Perform a strict final technical audit of this candidate.
+FINAL EVALUATION RUBRIC:
+1. TECHNICAL BREADTH (40%): Did they demonstrate a solid grasp of the ${jobRole} ecosystem?
+2. PROBLEM SOLVING (30%): How logical was their approach to technical scenarios?
+3. COMMUNICATION PRECISION (20%): Did they explain complex topics clearly without waffle?
+4. PROFESSIONAL READINESS (10%): Overall confidence and readiness for a real-world engineering team.
+
+Return ONLY a valid JSON object:
 {
-  "score": 85,
-  "feedback": "A comprehensive paragraph evaluating their strengths and technical accuracy.",
-  "areas_for_improvement": ["Specific technical gap", "Communication tip"]
+  "score": <Final Integrated Score 0-100>,
+  "feedback": "A high-level executive summary of their performance.",
+  "strengths": ["Strength 1", "Strength 2"],
+  "areas_for_improvement": ["Specific Technical Gap", "Soft Skill Tip"]
 }`;
     const text = await callLLM(prompt, "json");
     const jsonMatch = text.match(/[\{\[][\s\S]*[\}\]]/);
