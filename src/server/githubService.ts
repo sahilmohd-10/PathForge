@@ -21,12 +21,18 @@ export const githubService = {
 
         // Step 1 — Get User Information
         const userRes = await fetch(`https://api.github.com/users/${username}`, { headers });
-        if (!userRes.ok) return null;
+        if (!userRes.ok) {
+            console.warn(`GitHub API User Fetch Failed: ${userRes.status} ${userRes.statusText}`);
+            throw new Error(`GitHub user not found or API rate limited (${userRes.status})`);
+        }
         const userData = await userRes.json();
 
         // Step 2 — Fetch Repositories
         const reposRes = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30`, { headers });
-        if (!reposRes.ok) return null;
+        if (!reposRes.ok) {
+            console.warn(`GitHub API Repos Fetch Failed: ${reposRes.status} ${reposRes.statusText}`);
+            throw new Error(`Failed to fetch repositories (${reposRes.status})`);
+        }
         const repos = await reposRes.json();
 
         // Step 3 — Analyze Repository Data & Metrics
@@ -108,7 +114,11 @@ export const githubService = {
         };
     } catch (err) {
         console.error('GitHub Deep Audit Failed:', err);
-        return null;
+        return {
+            profile: { public_repos: 0 },
+            metrics: { total_stars: 0, total_forks: 0, event_activity_score: 0, top_repos_analyzed: 0 },
+            all_repos: []
+        };
     }
   }
 };

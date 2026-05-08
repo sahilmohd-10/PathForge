@@ -99,7 +99,7 @@ const ProjectAnalysis = () => {
                     <TwilioShare 
                       userId={user.id} 
                       featureName="Digital Asset Validation" 
-                      summary={`Digital Asset Score: ${evaluation.score}%. Verified Repos: ${evaluation.githubData?.public_repos || 'N/A'}. Feedback: ${evaluation.feedback?.substring(0, 60) || 'Optimization complete'}`} 
+                      summary={`Digital Asset Score: ${evaluation.score}%. Verified Repos: ${evaluation.githubData?.profile?.public_repos || 0}. Feedback: ${evaluation.feedback?.substring(0, 60) || 'Optimization complete'}`} 
                     />
                   )}
                 </div>
@@ -120,17 +120,19 @@ const ProjectAnalysis = () => {
                 <Rocket className="text-[#0081C9]" size={28} /> Project Showroom
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {(evaluation.projects && evaluation.projects.length > 0 && evaluation.projects[0].name !== 'Unknown' 
-                  ? evaluation.projects 
-                  : (evaluation.githubData?.all_repos || []).map((r: any) => ({
-                      name: r.name,
-                      overview: r.description || 'No description provided.',
-                      tools_used: r.primary_language ? [r.primary_language] : [],
-                      stars: r.stars,
-                      forks: r.forks,
-                      is_raw: true
-                    }))
-                ).slice(0, 15).map((project: any, i: number) => (
+                {(() => {
+                  const aiProjects = (evaluation.projects || []).filter((p: any) => p.name && p.name !== 'Unknown');
+                  const githubRepos = (evaluation.githubData?.all_repos || []).map((r: any) => ({
+                    name: r.name,
+                    overview: r.description || 'No description provided.',
+                    tools_used: r.primary_language ? [r.primary_language] : [],
+                    stars: r.stars,
+                    forks: r.forks,
+                    is_raw: true
+                  }));
+                  
+                  return aiProjects.length > 0 ? aiProjects : githubRepos;
+                })().slice(0, 15).map((project: any, i: number) => (
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
