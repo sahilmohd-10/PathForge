@@ -62,8 +62,8 @@ const AdminUsers = () => {
     }
   };
 
-  const filteredUsers = users.filter((u: any) => 
-    u.full_name.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredUsers = users.filter((u: any) =>
+    u.full_name.toLowerCase().includes(search.toLowerCase()) ||
     u.email.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -75,7 +75,7 @@ const AdminUsers = () => {
           'x-user-id': user?.id.toString()
         }
       });
-      setUsers(users.map((u: any) => 
+      setUsers(users.map((u: any) =>
         u.id === userId ? { ...u, is_verified: true } : u
       ));
     } catch (err) {
@@ -89,7 +89,7 @@ const AdminUsers = () => {
       subtitle="Review and manage the PathForge user base with audit-grade controls."
       maxWidth="max-w-6xl"
     >
-      {/* Delete Confirmation Modal */}
+      {}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-neon-dark rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-neon-teal transition-colors duration-300">
@@ -101,7 +101,7 @@ const AdminUsers = () => {
               </div>
             )}
             <div className="flex gap-4">
-              <button 
+              <button
                 onClick={() => {
                   setDeleteConfirm(null);
                   setError('');
@@ -111,7 +111,7 @@ const AdminUsers = () => {
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleDelete}
                 disabled={deleteLoading}
                 className="flex-1 py-3 bg-red-600 dark:bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 dark:hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -167,13 +167,27 @@ const AdminUsers = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
-                    user.role === 'admin' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
-                    user.role === 'recruiter' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' :
-                    'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-neon-cyan'
-                  }`}>
-                    {user.role}
-                  </span>
+                  <select 
+                    value={user.role}
+                    onChange={(e) => {
+                      const newRole = e.target.value;
+                      axios.put(`/api/admin/users/${user.id}/role`, { role: newRole }, {
+                        headers: { 'Authorization': `Bearer ${token}`, 'x-user-id': user?.id.toString() }
+                      }).then(() => {
+                        setUsers(users.map(u => u.id === user.id ? { ...u, role: newRole } : u));
+                      }).catch(err => alert(err.response?.data?.error || 'Failed to update role'));
+                    }}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-transparent border-0 focus:ring-0 cursor-pointer ${
+                      user.role === 'admin' ? 'text-emerald-700 dark:text-emerald-400' :
+                      user.role === 'recruiter' ? 'text-amber-700 dark:text-amber-400' :
+                      'text-indigo-700 dark:text-neon-cyan'
+                    }`}
+                  >
+                    <option value="student">Student</option>
+                    <option value="recruiter">Recruiter</option>
+                    <option value="admin">Admin</option>
+                    <option value="mentor">Mentor</option>
+                  </select>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
@@ -195,7 +209,7 @@ const AdminUsers = () => {
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
                     {!user.is_verified && (
-                      <button 
+                      <button
                         onClick={() => handleVerify(user.id)}
                         title="Verify user email"
                         className="p-2 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200"
@@ -206,7 +220,7 @@ const AdminUsers = () => {
                     <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200">
                       <Shield className="h-5 w-5" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => setDeleteConfirm(user)}
                       className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
                     >
@@ -224,4 +238,3 @@ const AdminUsers = () => {
 };
 
 export default AdminUsers;
-

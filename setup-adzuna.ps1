@@ -1,11 +1,11 @@
-# Adzuna Integration Setup Script (PowerShell)
-# This script helps set up and test the Adzuna API integration
+
+
 
 Write-Host "🚀 Adzuna API Integration Setup" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check if database exists
+
 if (-not (Test-Path "database.sqlite")) {
     Write-Host "📦 Creating database..." -ForegroundColor Yellow
     npm run seed
@@ -18,7 +18,7 @@ Write-Host "🌐 Testing Adzuna API Integration" -ForegroundColor Cyan
 Write-Host "=================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Make sure server is running
+
 $serverRunning = $false
 try {
     $null = Invoke-WebRequest -Uri "http://localhost:5000/api/jobs" -TimeoutSec 1
@@ -29,7 +29,7 @@ try {
 }
 
 if ($serverRunning) {
-    # Test 1: Fetch jobs from Adzuna (US)
+
     Write-Host "Test 1: Fetching jobs from Adzuna (US)..." -ForegroundColor Cyan
     try {
         $response = Invoke-WebRequest -Uri "http://localhost:5000/api/jobs?source=adzuna&country=us&limit=5" -UseBasicParsing
@@ -39,7 +39,7 @@ if ($serverRunning) {
         Write-Host "❌ Error: $($_.Exception.Message)" -ForegroundColor Red
     }
 
-    # Test 2: Search for specific jobs
+
     Write-Host ""
     Write-Host "Test 2: Searching for 'Python Developer' jobs..." -ForegroundColor Cyan
     try {
@@ -50,7 +50,7 @@ if ($serverRunning) {
         Write-Host "❌ Error: $($_.Exception.Message)" -ForegroundColor Red
     }
 
-    # Test 3: Fetch jobs from different countries
+
     Write-Host ""
     Write-Host "Test 3: Fetching jobs from UK (gb)..." -ForegroundColor Cyan
     try {

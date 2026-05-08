@@ -1,4 +1,4 @@
-// Using native Node.js fetch API (available in Node.js 18+)
+
 
 const ADZUNA_APP_ID = 'f448502e';
 const ADZUNA_APP_KEY = '7816e36630e9802e2c7e656b419716f9';
@@ -34,20 +34,13 @@ export interface ProcessedJob {
   external_url?: string;
 }
 
-/**
- * Fetch jobs from Adzuna API
- * @param country Country code (e.g., 'gb', 'us', 'ca', 'au', 'fr', 'de', 'nl', 'at', 'be', 'ch', 'cz', 'dk', 'fi', 'hu', 'ie', 'it', 'no', 'pl', 'pt', 'ru', 'sg')
- * @param categoryTag Optional job category tag (e.g., 'it-jobs', 'graduate-jobs', 'healthcare-jobs')
- * @param pageNumber Page number for pagination (starts at 1)
- * @param pageSize Number of jobs per page (max 50)
- * @returns Array of processed jobs
- */
+
 export async function fetchAdzunaJobs(
   country: string = 'us',
   categoryTag?: string,
   pageNumber: number = 1,
   pageSize: number = 50
-): Promise<ProcessedJob[]> {
+): Promise<{ results: ProcessedJob[], count: number }> {
   try {
     let url = `${ADZUNA_BASE_URL}/${country}/search/${pageNumber}?app_id=${ADZUNA_APP_ID}&app_key=${ADZUNA_APP_KEY}&results_per_page=${pageSize}`;
 
@@ -65,30 +58,26 @@ export async function fetchAdzunaJobs(
 
     if (!data.results) {
       console.warn('No results returned from Adzuna API');
-      return [];
+      return { results: [], count: 0 };
     }
 
-    return data.results.map((job: AdzunaJob) => processAdzunaJob(job));
+    return {
+      results: data.results.map((job: AdzunaJob) => processAdzunaJob(job)),
+      count: data.count || 0
+    };
   } catch (error) {
     console.error('Error fetching from Adzuna API:', error);
     throw error;
   }
 }
 
-/**
- * Search jobs on Adzuna with keyword
- * @param country Country code
- * @param keywords Search keywords
- * @param pageNumber Page number for pagination
- * @param pageSize Number of jobs per page
- * @returns Array of processed jobs
- */
+
 export async function searchAdzunaJobs(
   country: string = 'us',
   keywords: string = '',
   pageNumber: number = 1,
   pageSize: number = 50
-): Promise<ProcessedJob[]> {
+): Promise<{ results: ProcessedJob[], count: number }> {
   try {
     let url = `${ADZUNA_BASE_URL}/${country}/search/${pageNumber}?app_id=${ADZUNA_APP_ID}&app_key=${ADZUNA_APP_KEY}&results_per_page=${pageSize}`;
 
@@ -106,23 +95,24 @@ export async function searchAdzunaJobs(
 
     if (!data.results) {
       console.warn('No results returned from Adzuna API');
-      return [];
+      return { results: [], count: 0 };
     }
 
-    return data.results.map((job: AdzunaJob) => processAdzunaJob(job));
+    return {
+      results: data.results.map((job: AdzunaJob) => processAdzunaJob(job)),
+      count: data.count || 0
+    };
   } catch (error) {
     console.error('Error searching Adzuna API:', error);
     throw error;
   }
 }
 
-/**
- * Process Adzuna job to match our database schema
- */
+
 export function processAdzunaJob(job: AdzunaJob): ProcessedJob {
   const salaryRange = formatSalaryRange(job.salary_min, job.salary_max, job.salary_is_predicted);
-  
-  // Extract key requirements from description
+
+
   const requirements = extractRequirements(job.description || '');
 
   return {
@@ -138,16 +128,14 @@ export function processAdzunaJob(job: AdzunaJob): ProcessedJob {
   };
 }
 
-/**
- * Format salary range from Adzuna data
- */
+
 function formatSalaryRange(min?: number, max?: number, isPredicted?: number): string {
   if (!min && !max) {
     return 'Negotiable';
   }
 
   const predicted = isPredicted ? ' (predicted)' : '';
-  
+
   if (min && max) {
     return `$${Math.floor(min / 1000)}k - $${Math.floor(max / 1000)}k${predicted}`;
   } else if (min) {
@@ -159,9 +147,7 @@ function formatSalaryRange(min?: number, max?: number, isPredicted?: number): st
   return 'Negotiable';
 }
 
-/**
- * Format contract type from Adzuna data
- */
+
 function formatContractType(contractType?: string): string {
   if (!contractType) return 'Full-time';
 
@@ -180,9 +166,7 @@ function formatContractType(contractType?: string): string {
   return typeMap[contractType.toLowerCase()] || 'Full-time';
 }
 
-/**
- * Extract key technical requirements from job description
- */
+
 function extractRequirements(description: string): string[] {
   const techKeywords = [
     'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'Go', 'Rust', 'PHP', 'Ruby',
@@ -203,28 +187,24 @@ function extractRequirements(description: string): string[] {
     }
   }
 
-  return Array.from(found).slice(0, 10); // Maximum 10 keywords
+  return Array.from(found).slice(0, 10);
 }
 
-/**
- * Clean description by removing HTML tags and extra whitespace
- */
+
 function cleanDescription(description: string): string {
   return description
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/<[^>]*>/g, '')
     .replace(/&quot;/g, '"')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ') // Collapse whitespace
+    .replace(/\s+/g, ' ')
     .trim()
-    .substring(0, 5000); // Limit to 5000 characters
+    .substring(0, 5000);
 }
 
-/**
- * Get available categories for a country
- */
+
 export async function getAdzunaCategories(country: string = 'us'): Promise<any> {
   try {
     const response = await fetch(`${ADZUNA_BASE_URL}/${country}/categories?app_id=${ADZUNA_APP_ID}&app_key=${ADZUNA_APP_KEY}`);

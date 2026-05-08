@@ -70,7 +70,7 @@ export default function AdminDatabase() {
   const handleDelete = async () => {
     if (!deleteConfirm) return;
     const { id, tableName } = deleteConfirm;
-    
+
     try {
       const res = await fetch(`/api/admin/database/table/${tableName}/${id}`, {
         method: 'DELETE',
@@ -78,7 +78,7 @@ export default function AdminDatabase() {
       });
       if (res.ok) {
         setTableData(tableData.filter(row => row.id !== id));
-        fetchTables(); // Update counts
+        fetchTables();
       }
     } catch (err) {
       console.error('Failed to delete record:', err);
@@ -89,7 +89,7 @@ export default function AdminDatabase() {
 
   const handleReset = async () => {
     try {
-      const res = await fetch('/api/data/reset', { 
+      const res = await fetch('/api/data/reset', {
         method: 'POST',
         headers: getHeaders()
       });
@@ -108,7 +108,7 @@ export default function AdminDatabase() {
   const handleSeed = async () => {
     try {
       setSeeding(true);
-      const res = await fetch('/api/data/seed', { 
+      const res = await fetch('/api/data/seed', {
         method: 'POST',
         headers: getHeaders()
       });
@@ -132,7 +132,7 @@ export default function AdminDatabase() {
 
   const handleUpdateRecord = async () => {
     if (!editingRecord || !selectedTable) return;
-    
+
     try {
       const changes: any = {};
       Object.keys(editData).forEach(key => {
@@ -154,9 +154,9 @@ export default function AdminDatabase() {
         },
         body: JSON.stringify(changes)
       });
-      
+
       if (res.ok) {
-        const updatedTableData = tableData.map(row => 
+        const updatedTableData = tableData.map(row =>
           row.id === editingRecord.id ? editData : row
         );
         setTableData(updatedTableData);
@@ -169,7 +169,7 @@ export default function AdminDatabase() {
 
   const handleCreateRecord = async () => {
     if (!selectedTable || Object.keys(newRecordData).length === 0) return;
-    
+
     try {
       const res = await fetch(`/api/admin/database/table/${selectedTable}`, {
         method: 'POST',
@@ -179,7 +179,7 @@ export default function AdminDatabase() {
         },
         body: JSON.stringify(newRecordData)
       });
-      
+
       if (res.ok) {
         const result = await res.json();
         setTableData([...tableData, result.record]);
@@ -207,11 +207,11 @@ export default function AdminDatabase() {
       maxWidth="max-w-7xl"
     >
       <div className="space-y-8">
-        {/* Delete Confirmation Modal */}
+        {}
       <AnimatePresence>
         {deleteConfirm && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -220,13 +220,13 @@ export default function AdminDatabase() {
               <h3 className="text-xl font-bold text-gray-900 dark:text-neon-cyan mb-4">Confirm Deletion</h3>
               <p className="text-gray-600 dark:text-neon-light mb-8">Are you sure you want to delete this record from <span className="font-bold text-indigo-600 dark:text-neon-cyan">{deleteConfirm.tableName}</span>? This action cannot be undone.</p>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setDeleteConfirm(null)}
                   className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleDelete}
                   className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
                 >
@@ -241,7 +241,7 @@ export default function AdminDatabase() {
       <AnimatePresence>
         {editingRecord && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -269,13 +269,13 @@ export default function AdminDatabase() {
                 ))}
               </div>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setEditingRecord(null)}
                   className="flex-1 py-3 bg-gray-100 dark:bg-neon-gray text-gray-700 dark:text-neon-light rounded-xl font-bold hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleUpdateRecord}
                   className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
                 >
@@ -290,7 +290,7 @@ export default function AdminDatabase() {
       <AnimatePresence>
         {creatingRecord && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -319,7 +319,7 @@ export default function AdminDatabase() {
                     </button>
                   </div>
                 ))}
-                <button 
+                <button
                   onClick={() => {
                     const fieldName = prompt('Field name:');
                     if (fieldName && !newRecordData[fieldName]) {
@@ -332,13 +332,13 @@ export default function AdminDatabase() {
                 </button>
               </div>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => { setCreatingRecord(false); setNewRecordData({}); }}
                   className="flex-1 py-3 bg-gray-100 dark:bg-neon-gray text-gray-700 dark:text-neon-light rounded-xl font-bold hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleCreateRecord}
                   disabled={Object.keys(newRecordData).length === 0}
                   className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -354,7 +354,7 @@ export default function AdminDatabase() {
       <AnimatePresence>
         {resetConfirm && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -363,13 +363,13 @@ export default function AdminDatabase() {
               <h3 className="text-xl font-bold text-red-600 dark:text-red-400 mb-4 uppercase tracking-wider">Danger Zone</h3>
               <p className="text-gray-600 dark:text-neon-light mb-8 font-medium">Are you sure you want to <span className="font-bold text-red-600 dark:text-red-400">RESET THE ENTIRE DATABASE</span>? This will delete all users, jobs, and applications. This action is permanent.</p>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setResetConfirm(false)}
                   className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleReset}
                   className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
                 >
@@ -384,7 +384,7 @@ export default function AdminDatabase() {
       <AnimatePresence>
         {seedConfirm && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -393,14 +393,14 @@ export default function AdminDatabase() {
               <h3 className="text-xl font-bold text-indigo-600 dark:text-neon-cyan mb-4 uppercase tracking-wider">Seed Database</h3>
               <p className="text-gray-600 dark:text-neon-light mb-8 font-medium">This will clear existing data and generate <span className="font-bold text-indigo-600 dark:text-neon-cyan">1000+ dummy records</span> (Users, Jobs, Applications, etc.) for testing. This may take a few seconds.</p>
               <div className="flex gap-4">
-                <button 
+                <button
                   disabled={seeding}
                   onClick={() => setSeedConfirm(false)}
                   className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   disabled={seeding}
                   onClick={handleSeed}
                   className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
@@ -423,21 +423,21 @@ export default function AdminDatabase() {
         <div>
         </div>
         <div className="flex gap-4">
-          <button 
+          <button
             onClick={() => setSeedConfirm(true)}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-neon-cyan border border-indigo-100 dark:border-indigo-900 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors font-bold"
           >
             <Database className="w-4 h-4" />
             Seed Data
           </button>
-          <button 
+          <button
             onClick={() => setResetConfirm(true)}
             className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors font-bold"
           >
             <Trash2 className="w-4 h-4" />
             Reset Database
           </button>
-          <button 
+          <button
             onClick={fetchTables}
             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neon-dark border border-gray-200 dark:border-neon-teal rounded-xl hover:bg-gray-50 dark:hover:bg-neon-gray transition-colors font-bold text-gray-900 dark:text-neon-light"
           >
@@ -445,7 +445,7 @@ export default function AdminDatabase() {
             Refresh Stats
           </button>
           {selectedTable && (
-            <button 
+            <button
               onClick={() => setCreatingRecord(true)}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors font-bold"
             >
@@ -457,7 +457,7 @@ export default function AdminDatabase() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Table List */}
+        {}
         <div className="lg:col-span-1 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-neon-cyan flex items-center gap-2">
             <TableIcon className="w-5 h-5 text-indigo-600 dark:text-neon-cyan" />
@@ -489,7 +489,7 @@ export default function AdminDatabase() {
           </div>
         </div>
 
-        {/* Data View */}
+        {}
         <div className="lg:col-span-3 space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -569,4 +569,3 @@ export default function AdminDatabase() {
     </PageShell>
   );
 }
-

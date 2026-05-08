@@ -3,7 +3,7 @@ import db from '../db.ts';
 
 const router = express.Router();
 
-// Middleware to check admin role
+
 const isAdmin = async (req: any, res: any, next: any) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -11,7 +11,7 @@ const isAdmin = async (req: any, res: any, next: any) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Simple token validation (in production, decode JWT)
+
     const userId = req.headers['x-user-id'];
     if (!userId) {
       return res.status(401).json({ error: 'User ID required' });
@@ -29,20 +29,20 @@ const isAdmin = async (req: any, res: any, next: any) => {
   }
 };
 
-// Get all users (including OAuth users)
+
 router.get('/users', isAdmin, async (req, res) => {
   try {
     const users = await db('users')
       .select('id', 'email', 'full_name', 'role', 'is_verified', 'is_oauth_user', 'created_at')
       .orderBy('created_at', 'desc');
-    
+
     res.json(users);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get user details by ID
+
 router.get('/users/:id', isAdmin, async (req, res) => {
   try {
     const user = await db('users').where({ id: req.params.id }).first();
@@ -51,7 +51,7 @@ router.get('/users/:id', isAdmin, async (req, res) => {
     }
 
     const profile = await db('profiles').where({ user_id: user.id }).first();
-    
+
     res.json({
       user: {
         id: user.id,
@@ -69,10 +69,10 @@ router.get('/users/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Update user (admin can change role, verification status, etc.)
+
 router.put('/users/:id', isAdmin, async (req, res) => {
   const { role, is_verified, full_name } = req.body;
-  
+
   try {
     const user = await db('users').where({ id: req.params.id }).first();
     if (!user) {
@@ -92,11 +92,11 @@ router.put('/users/:id', isAdmin, async (req, res) => {
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No valid updates provided' });
     }
-    
+
     await db('users').where({ id: req.params.id }).update(updates);
     const updatedUser = await db('users').where({ id: req.params.id }).first();
 
-    res.json({ 
+    res.json({
       message: 'User updated successfully',
       user: {
         id: updatedUser.id,
@@ -112,7 +112,7 @@ router.put('/users/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Delete user
+
 router.delete('/users/:id', isAdmin, async (req, res) => {
   try {
     const user = await db('users').where({ id: req.params.id }).first();
@@ -120,23 +120,23 @@ router.delete('/users/:id', isAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Prevent deleting self
+
     if (user.id === (req as any).user.id) {
       return res.status(400).json({ error: 'Cannot delete your own admin account' });
     }
 
-    // Delete user and related data
+
     await db.transaction(async (trx) => {
       await trx('profiles').where({ user_id: user.id }).delete();
       await trx('user_skills').where({ user_id: user.id }).delete();
       await trx('applications').where({ user_id: user.id }).delete();
       await trx('resume_data').where({ user_id: user.id }).delete();
       await trx('career_scores').where({ user_id: user.id }).delete();
-      // Delete connections where user is requester or receiver
+
       await trx('connections').where({ requester_id: user.id }).orWhere({ receiver_id: user.id }).delete();
-      // Delete messages where user is sender or receiver
+
       await trx('messages').where({ sender_id: user.id }).orWhere({ receiver_id: user.id }).delete();
-      // Finally, delete the user
+
       await trx('users').where({ id: user.id }).delete();
     });
 
@@ -146,7 +146,7 @@ router.delete('/users/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Get stats about users
+
 router.get('/stats/users', isAdmin, async (req, res) => {
   try {
     const stats = await db('users').select('role').then((users: any[]) => {
@@ -175,10 +175,10 @@ router.get('/stats/users', isAdmin, async (req, res) => {
   }
 });
 
-// Search users
+
 router.get('/search', isAdmin, async (req, res) => {
   const { email, name, role } = req.query;
-  
+
   try {
     let query = db('users');
 
@@ -202,7 +202,7 @@ router.get('/search', isAdmin, async (req, res) => {
   }
 });
 
-// Verify a user manually (admin override)
+
 router.post('/users/:id/verify', isAdmin, async (req, res) => {
   try {
     const user = await db('users').where({ id: req.params.id }).first();
@@ -220,7 +220,7 @@ router.post('/users/:id/verify', isAdmin, async (req, res) => {
   }
 });
 
-// Get OAuth users
+
 router.get('/oauth-users', async (req, res) => {
   try {
     const oauthUsers = await db('users')
@@ -234,7 +234,7 @@ router.get('/oauth-users', async (req, res) => {
   }
 });
 
-// Create test/dummy users
+
 router.post('/create-test-users', isAdmin, async (req, res) => {
   try {
     const bcrypt = await import('bcryptjs');
@@ -259,26 +259,26 @@ router.post('/create-test-users', isAdmin, async (req, res) => {
             ...user,
             password: hashedPassword
           });
-          
-          // Create profile
+
+
           await db('profiles').insert({ user_id: id });
           created.push({ id, ...user });
         }
       } catch (e) {
-        // User already exists, skip
+
       }
     }
 
-    res.json({ 
+    res.json({
       message: `Created ${created.length} test users`,
-      created 
+      created
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get user statistics
+
 router.get('/user-stats', isAdmin, async (req, res) => {
   try {
     const totalUsers = await db('users').count('id as count').first();
@@ -304,10 +304,10 @@ router.get('/user-stats', isAdmin, async (req, res) => {
   }
 });
 
-// Update user role
+
 router.put('/users/:id/role', isAdmin, async (req, res) => {
   const { role } = req.body;
-  
+
   if (!['student', 'recruiter', 'admin', 'mentor'].includes(role)) {
     return res.status(400).json({ error: 'Invalid role' });
   }
@@ -318,7 +318,7 @@ router.put('/users/:id/role', isAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Prevent demoting self
+
     if (user.id === (req as any).user.id && role !== 'admin') {
       return res.status(400).json({ error: 'Cannot demote your own admin account' });
     }
@@ -326,7 +326,7 @@ router.put('/users/:id/role', isAdmin, async (req, res) => {
     await db('users').where({ id: req.params.id }).update({ role });
     const updatedUser = await db('users').where({ id: req.params.id }).first();
 
-    res.json({ 
+    res.json({
       message: 'User role updated',
       user: updatedUser
     });
@@ -335,10 +335,10 @@ router.put('/users/:id/role', isAdmin, async (req, res) => {
   }
 });
 
-// Bulk verify users
+
 router.post('/bulk-verify', isAdmin, async (req, res) => {
   const { userIds } = req.body;
-  
+
   if (!Array.isArray(userIds)) {
     return res.status(400).json({ error: 'userIds must be an array' });
   }
@@ -346,7 +346,7 @@ router.post('/bulk-verify', isAdmin, async (req, res) => {
   try {
     await db('users').whereIn('id', userIds).update({ is_verified: 1 });
 
-    res.json({ 
+    res.json({
       message: `Verified ${userIds.length} users`
     });
   } catch (error: any) {
@@ -354,23 +354,23 @@ router.post('/bulk-verify', isAdmin, async (req, res) => {
   }
 });
 
-// Bulk delete users
+
 router.post('/bulk-delete', isAdmin, async (req, res) => {
   const { userIds } = req.body;
-  
+
   if (!Array.isArray(userIds)) {
     return res.status(400).json({ error: 'userIds must be an array' });
   }
 
   try {
     const adminId = (req as any).user.id;
-    
-    // Prevent deleting self
+
+
     if (userIds.includes(adminId)) {
       return res.status(400).json({ error: 'Cannot delete your own admin account' });
     }
 
-    // Delete all related data
+
     await db.transaction(async (trx) => {
       await trx('profiles').whereIn('user_id', userIds).del();
       await trx('user_skills').whereIn('user_id', userIds).del();
@@ -382,7 +382,7 @@ router.post('/bulk-delete', isAdmin, async (req, res) => {
       await trx('users').whereIn('id', userIds).del();
     });
 
-    res.json({ 
+    res.json({
       message: `Deleted ${userIds.length} users`
     });
   } catch (error: any) {
@@ -390,13 +390,13 @@ router.post('/bulk-delete', isAdmin, async (req, res) => {
   }
 });
 
-// Export all users as CSV
+
 router.get('/export-users', isAdmin, async (req, res) => {
   try {
     const users = await db('users')
       .select('id', 'email', 'full_name', 'role', 'is_verified', 'is_oauth_user', 'created_at');
 
-    // Convert to CSV
+
     const csv = [
       ['ID', 'Email', 'Full Name', 'Role', 'Verified', 'OAuth', 'Created At'],
       ...users.map((u: any) => [
@@ -420,7 +420,7 @@ router.get('/export-users', isAdmin, async (req, res) => {
   }
 });
 
-// Add dummy career/data match data for students
+
 router.get('/add-career-scores', isAdmin, async (req, res) => {
   try {
     const careerPaths = [
@@ -436,31 +436,31 @@ router.get('/add-career-scores', isAdmin, async (req, res) => {
       'Security Engineer'
     ];
 
-    // Get all students
+
     const students = await db('users').where({ role: 'student' });
-    
+
     const created: any[] = [];
-    
+
     for (const student of students) {
       try {
-        // Check if career score already exists
+
         const existing = await db('career_scores').where({ user_id: student.id }).first();
-        
+
         if (!existing) {
           const careerPath = careerPaths[Math.floor(Math.random() * careerPaths.length)];
-          
+
           const careerScore = {
             user_id: student.id,
             career_path: careerPath,
-            confidence_score: Math.floor(Math.random() * 40) + 60, // 60-100
-            market_fit_score: Math.floor(Math.random() * 40) + 60, // 60-100
-            growth_potential: Math.floor(Math.random() * 40) + 60, // 60-100
-            churn_risk: Math.floor(Math.random() * 40) + 10, // 10-50
-            salary_min: Math.floor(Math.random() * 50000) + 60000, // 60k-110k
-            salary_max: Math.floor(Math.random() * 50000) + 110000, // 110k-160k
+            confidence_score: Math.floor(Math.random() * 40) + 60,
+            market_fit_score: Math.floor(Math.random() * 40) + 60,
+            growth_potential: Math.floor(Math.random() * 40) + 60,
+            churn_risk: Math.floor(Math.random() * 40) + 10,
+            salary_min: Math.floor(Math.random() * 50000) + 60000,
+            salary_max: Math.floor(Math.random() * 50000) + 110000,
             reasoning: `Strong potential in ${careerPath} based on profile analysis.`
           };
-          
+
           await db('career_scores').insert(careerScore);
           created.push({
             full_name: student.full_name,
@@ -478,6 +478,20 @@ router.get('/add-career-scores', isAdmin, async (req, res) => {
       total: created.length,
       success: true
     });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.delete('/jobs/:id', isAdmin, async (req, res) => {
+  try {
+    await db.transaction(async (trx) => {
+      await trx('applications').where({ job_id: req.params.id }).delete();
+      await trx('jobs').where({ id: req.params.id }).delete();
+    });
+
+    res.json({ message: 'Job and associated applications deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

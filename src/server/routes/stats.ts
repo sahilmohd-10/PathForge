@@ -3,7 +3,7 @@ import db from '../db.ts';
 
 const router = express.Router();
 
-// Middleware to check admin role
+
 const isAdmin = async (req: any, res: any, next: any) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -11,7 +11,7 @@ const isAdmin = async (req: any, res: any, next: any) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Simple token validation (in production, decode JWT)
+
     const userId = req.headers['x-user-id'];
     if (!userId) {
       return res.status(401).json({ error: 'User ID required' });
@@ -29,7 +29,7 @@ const isAdmin = async (req: any, res: any, next: any) => {
   }
 };
 
-// Admin Stats
+
 router.get('/admin/stats', isAdmin, async (req, res) => {
   try {
     const students = await db('users').where({ role: 'student' }).count('id as count').first();
@@ -38,15 +38,15 @@ router.get('/admin/stats', isAdmin, async (req, res) => {
     const jobs = await db('jobs').count('id as count').first();
     const applications = await db('applications').count('id as count').first();
 
-    // Calculate System Alerts (new registrations, pending applications, unverified users)
+
     const pendingApps = await db('applications').where({ status: 'pending' }).count('id as count').first();
     const unverifiedUsers = await db('users').where({ is_verified: 0 }).count('id as count').first();
     const systemAlerts = Number(pendingApps?.count || 0) + Number(unverifiedUsers?.count || 0);
 
-    // Get Platform Activity (daily activity for the last 7 days)
+
     const platformActivity = [];
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
@@ -86,7 +86,7 @@ router.get('/admin/stats', isAdmin, async (req, res) => {
   }
 });
 
-// Recruiter Stats
+
 router.get('/recruiter/stats', async (req, res) => {
   const recruiterId = req.query.userId;
   try {
@@ -134,7 +134,7 @@ router.get('/recruiter/stats', async (req, res) => {
   }
 });
 
-// Admin Users List
+
 router.get('/admin/users', async (req, res) => {
   try {
     const users = await db('users').select('id', 'email', 'full_name', 'role', 'created_at').orderBy('created_at', 'desc');
@@ -144,14 +144,15 @@ router.get('/admin/users', async (req, res) => {
   }
 });
 
-// List all tables and their row counts
+
 router.get('/admin/database/tables', isAdmin, async (req, res) => {
   try {
     const tables = [
-      'users', 'profiles', 'skills', 'user_skills', 'jobs', 
-      'applications', 'connections', 'messages', 'resume_data', 'career_scores'
+      'users', 'profiles', 'skills', 'user_skills', 'jobs', 'applications', 
+      'connections', 'messages', 'resume_data', 'career_scores', 
+      'mock_interviews', 'learning_roadmaps', 'portfolio_evaluations', 'ollama_insights'
     ];
-    
+
     const stats = [];
     for (const table of tables) {
       const count = await db(table).count('id as count').first();
@@ -163,18 +164,18 @@ router.get('/admin/database/tables', isAdmin, async (req, res) => {
   }
 });
 
-// Get data for a specific table
+
 router.get('/admin/database/table/:name', isAdmin, async (req, res) => {
   const { name } = req.params;
   try {
-    const data = await db(name).select('*').limit(100); // Limit for safety
+    const data = await db(name).select('*').limit(100);
     res.json(data);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Delete a record from any table
+
 router.delete('/admin/database/table/:name/:id', isAdmin, async (req, res) => {
   const { name, id } = req.params;
   try {
@@ -185,7 +186,7 @@ router.delete('/admin/database/table/:name/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Update a record in any table
+
 router.put('/admin/database/table/:name/:id', isAdmin, async (req, res) => {
   const { name, id } = req.params;
   const updates = req.body;
@@ -196,7 +197,7 @@ router.put('/admin/database/table/:name/:id', isAdmin, async (req, res) => {
     }
 
     const updated = await db(name).where({ id }).update(updates);
-    
+
     if (updated === 0) {
       return res.status(404).json({ error: 'Record not found' });
     }
@@ -208,7 +209,7 @@ router.put('/admin/database/table/:name/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Create a new record in any table
+
 router.post('/admin/database/table/:name', isAdmin, async (req, res) => {
   const { name } = req.params;
   const data = req.body;
@@ -226,7 +227,7 @@ router.post('/admin/database/table/:name', isAdmin, async (req, res) => {
   }
 });
 
-// Get data match for admin
+
 router.get('/admin/data-match', isAdmin, async (req, res) => {
   try {
     let matches = await db('users')
@@ -246,7 +247,7 @@ router.get('/admin/data-match', isAdmin, async (req, res) => {
       .where('users.role', 'student')
       .orderBy('career_scores.market_fit_score', 'desc');
 
-    // Ensure all matches have default values for missing fields
+
     const careerPaths = [
       'Software Engineer',
       'Data Scientist',

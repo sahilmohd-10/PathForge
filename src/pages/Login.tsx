@@ -1,54 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
-import { AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Phone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Login = () => {
   const { login } = useAuth();
+  const { } = useTheme();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [role, setRole] = useState('student');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    console.log('✅ Login component mounted');
-    console.log('📱 GoogleLogin component should be visible below');
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const emailRegex = /^.+@.+\..+$/;
-    if (!emailRegex.test(normalizedEmail)) {
-      setError('Invalid email format');
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      setLoading(false);
-      return;
-    }
-
     try {
       if (isRegister) {
-        const registerRes = await axios.post('/api/auth/register', { email, password, fullName, role });
+        const registerRes = await axios.post('/api/auth/register', { 
+          email, 
+          password, 
+          role, 
+          fullName: email.split('@')[0],
+          phoneNumber: phoneNumber 
+        });
         login(registerRes.data.token, registerRes.data.user);
       } else {
         const res = await axios.post('/api/auth/login', { email, password, role });
         login(res.data.token, res.data.user);
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Something went wrong';
-      setError(errorMessage);
+      setError(err.response?.data?.error || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -59,189 +48,169 @@ const Login = () => {
     setLoading(true);
     try {
       const res = await axios.post('/api/auth/google', {
-        token: credentialResponse.credential || credentialResponse,
-        role: role,
+        token: credentialResponse.credential,
+        role: role
       });
       login(res.data.token, res.data.user);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Google login failed. Please check your credentials.');
-      console.error('Google login error:', err);
+      setError(err.response?.data?.error || 'Google login failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLoginSuccess = (credentialResponse: any) => {
-    handleGoogleLogin(credentialResponse);
-  };
-
-  const handleGoogleLoginError = () => {
-    console.error('❌ Google login failed - check browser console for details');
-    console.error('Possible issues:');
-    console.error('1. Google Client ID is invalid or missing');
-    console.error('2. Domain is not authorized in Google Console');
-    console.error('3. Google API not enabled');
-    setError('Google login failed. Please check the console for details or use email/password.');
-  };
-
-  const allRoles = [
-    { id: 'student', label: 'Student' },
-    { id: 'recruiter', label: 'Recruiter' },
-    { id: 'admin', label: 'Admin' },
-  ];
-
-  // Show only Student and Recruiter for signup, all roles for login
-  const roles = isRegister ? [
-    { id: 'student', label: 'Student' },
-    { id: 'recruiter', label: 'Recruiter' },
-  ] : allRoles;
-
-  // Reset to student if admin is selected during signup transition
-  useEffect(() => {
-    if (isRegister && role === 'admin') {
-      setRole('student');
-    }
-  }, [isRegister]);
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4 transition-colors duration-300 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-primary-100/50 dark:bg-primary-900/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-100/50 dark:bg-blue-900/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
-
-      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-slate-200 dark:border-slate-700 transition-colors duration-300 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-primary-600 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">P</span>
-            </div>
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 font-['Plus_Jakarta_Sans']">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-[480px] bg-white rounded-[40px] shadow-2xl shadow-slate-200/50 p-10 md:p-12 relative overflow-hidden"
+      >
+        {/* Logo & Header */}
+        <div className="flex flex-col items-center text-center mb-10">
+          <div className="w-16 h-16 bg-[#0081C9] rounded-2xl flex items-center justify-center text-white font-black text-3xl shadow-xl shadow-blue-500/20 mb-6">
+            P
           </div>
-          <h1 className="text-4xl font-bold text-primary-600">PathForge</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-3 font-medium">
-            {isRegister ? 'Start your career journey' : `Welcome back, ${role.charAt(0).toUpperCase() + role.slice(1)}`}
-          </p>
+          <h1 className="text-4xl font-black text-[#0f172a] tracking-tight mb-2">PathForge</h1>
+          <p className="text-slate-500 font-bold">Welcome back, {role.charAt(0).toUpperCase() + role.slice(1)}</p>
         </div>
 
-        {/* Role Selection Tabs */}
-        <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl mb-8 transition-all duration-300">
-          {roles.map((r) => (
+        {/* Role Tabs */}
+        <div className="bg-[#F1F5F9] p-1.5 rounded-2xl flex mb-10">
+          {['student', 'recruiter', 'admin'].map((r) => (
             <button
-              key={r.id}
-              onClick={() => setRole(r.id)}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
-                role === r.id 
-                  ? 'bg-primary-600 text-white shadow-lg' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              key={r}
+              onClick={() => setRole(r)}
+              className={`flex-1 py-3 px-2 rounded-xl text-sm font-black transition-all ${
+                role === r 
+                ? 'bg-[#0081C9] text-white shadow-lg shadow-blue-500/30' 
+                : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              {r.label}
+              {r.charAt(0).toUpperCase() + r.slice(1)}
             </button>
           ))}
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm border border-red-200 dark:border-red-900/30 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <div>{error}</div>
-          </div>
-        )}
-
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
-          {isRegister && (
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5">Full Name</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-black text-[#1e293b] ml-1">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
-                type="text"
+                type="email"
                 required
-                disabled={loading}
-                placeholder="John Doe"
-                className="input-base"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                placeholder="your@email.com"
+                className="w-full pl-12 pr-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all text-slate-900 font-medium"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-          )}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5">Email Address</label>
-            <input
-              type="email"
-              required
-              disabled={loading}
-              placeholder="your@email.com"
-              className="input-base"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2.5">Password</label>
-            <input
-              type="password"
-              required
-              disabled={loading}
-              placeholder="••••••••"
-              className="input-base"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">At least 8 characters</p>
+
+          <div className="space-y-2">
+            <label className="text-sm font-black text-[#1e293b] ml-1">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                className="w-full pl-12 pr-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all text-slate-900 font-medium"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            {!isRegister && <p className="text-[10px] font-bold text-slate-400 ml-1">At least 8 characters</p>}
           </div>
+
+          <AnimatePresence>
+            {isRegister && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-2"
+              >
+                <label className="text-sm font-black text-[#1e293b] ml-1">Phone Number (Twilio SMS)</label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    type="tel"
+                    required={isRegister}
+                    placeholder="+1234567890"
+                    className="w-full pl-12 pr-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all text-slate-900 font-medium"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-rose-50 text-rose-600 p-4 rounded-xl text-xs font-bold border border-rose-100"
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full mt-6"
+            className="w-full py-4 bg-[#0081C9] hover:bg-[#0070B0] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
           >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Processing...
-              </span>
-            ) : (
-              isRegister ? 'Create Account' : 'Sign In'
+            {loading ? <Loader2 className="animate-spin" size={20} /> : (
+              <>
+                {isRegister ? 'Create Account' : 'Sign In'}
+                <ArrowRight size={18} />
+              </>
             )}
           </button>
         </form>
 
         {/* Divider */}
-        <div className="relative mb-6">
+        <div className="relative my-10">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+            <div className="w-full border-t border-slate-100"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-3 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-500 font-medium">Or continue with</span>
-          </div>
-        </div>
-
-        {/* Google OAuth Button */}
-        <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <GoogleLogin
-              onSuccess={handleGoogleLoginSuccess}
-              onError={handleGoogleLoginError}
-              size="large"
-              text="signin_with"
-            />
+          <div className="relative flex justify-center text-[10px]">
+            <span className="px-4 bg-white text-slate-400 font-black uppercase tracking-widest">Or continue with</span>
           </div>
         </div>
 
-        {/* Toggle Form */}
-        <p className="text-center text-slate-600 dark:text-slate-400 mt-8 text-sm">
-          {isRegister ? "Already have an account? " : "Don't have an account? "}
-          <button
-            type="button"
+        {/* Google Login */}
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleLogin}
+            onError={() => setError('Google login failed')}
+            shape="pill"
+            theme="outline"
+            width="100%"
+          />
+        </div>
+
+        {/* Footer */}
+        <p className="text-center mt-10 text-xs font-bold text-slate-500">
+          {isRegister ? 'Already have an account? ' : 'New to PathForge? '}
+          <button 
             onClick={() => {
               setIsRegister(!isRegister);
               setError('');
             }}
-            className="font-bold text-primary-600 dark:text-primary-400 hover:underline transition-all"
+            className="text-[#0081C9] hover:underline"
           >
-            {isRegister ? 'Sign In' : 'Sign Up'}
+            {isRegister ? 'Sign In' : 'Create Account'}
           </button>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -5,20 +5,20 @@ async function seedDatabase() {
   try {
     console.log('Starting database seeding...');
 
-    // Clear existing data (optional - comment out if you want to preserve existing data)
-    // await db('applications').del();
-    // await db('jobs').del();
-    // await db('user_skills').del();
-    // await db('users').del();
 
-    // Check if data already exists
+
+
+
+
+
+
     const userCount = await db('users').count('id as count').first();
     if ((userCount as any).count > 0) {
       console.log('Database already has data. Skipping seed.');
       return;
     }
 
-    // Create admin user
+
     const adminPassword = await bcrypt.hash('admin123', 10);
     const admin = await db('users').insert({
       email: 'admin@pathforge.com',
@@ -31,7 +31,7 @@ async function seedDatabase() {
     });
     console.log('Created admin user');
 
-    // Create student users
+
     const studentPasswords = await Promise.all([
       bcrypt.hash('student1', 10),
       bcrypt.hash('student2', 10),
@@ -84,7 +84,7 @@ async function seedDatabase() {
     ]);
     console.log('Created 5 student users');
 
-    // Create recruiter users
+
     const recruiterPasswords = await Promise.all([
       bcrypt.hash('recruiter1', 10),
       bcrypt.hash('recruiter2', 10),
@@ -119,11 +119,11 @@ async function seedDatabase() {
     ]);
     console.log('Created 3 recruiter users');
 
-    // Get the actual IDs from inserted data
+
     const allStudents = await db('users').where({ role: 'student' }).select('id');
     const allRecruiters = await db('users').where({ role: 'recruiter' }).select('id');
 
-    // Create jobs
+
     const jobs = await db('jobs').insert([
       {
         title: 'Senior Frontend Developer',
@@ -188,10 +188,10 @@ async function seedDatabase() {
     ]);
     console.log('Created 5 job postings');
 
-    // Get all jobs
+
     const allJobs = await db('jobs').select('id');
 
-    // Create applications
+
     const applications = await db('applications').insert([
       {
         job_id: allJobs[0].id,
@@ -259,5 +259,5 @@ async function seedDatabase() {
   }
 }
 
-// Run seed
+
 seedDatabase();

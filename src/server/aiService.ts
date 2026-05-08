@@ -286,12 +286,12 @@ function buildIndustryMatches(skills: string[]) {
 }
 
 export const aiService = {
-  // 1. Smart Career Direction Engine
+
   async getCareerGuidance(resumeText: string, interests: string[], currentSkills: string[]) {
     return this.localCareerGuidance(resumeText, interests, currentSkills);
   },
 
-  // 2. Skill Gap Analysis
+
   async analyzeSkillGap(userSkills: string[], targetJobRequirements: string[]) {
     const missing_skills = targetJobRequirements.filter(req => !userSkills.includes(req));
     return {
@@ -305,7 +305,7 @@ export const aiService = {
     };
   },
 
-  // 3. Resume Intelligence
+
   async analyzeResume(resumeText: string) {
     return this.localAnalyzeResume(resumeText);
   },
@@ -509,7 +509,7 @@ export const aiService = {
     };
   },
 
-  // 4. ML Predictive Analysis
+
   async getMLModelAnalysis(profileData: any, resumeText: string = '') {
     const scriptPath = path.resolve(__dirname, 'career_model_inference.py');
     const python = getPythonExecutable();

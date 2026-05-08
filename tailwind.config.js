@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+
 export default {
   darkMode: 'class',
   content: [
@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Premium color palette
+
         'neon': {
           'cyan': '#00D9FF',
           'teal': '#00B8A9',

@@ -1,20 +1,9 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
+/// <reference types="vite/client" />
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
-  return {
-    plugins: [react(), tailwindcss()],
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
-    },
-    server: {
-      // HMR can be disabled by setting DISABLE_HMR=true.
-      hmr: process.env.DISABLE_HMR !== 'true',
-    },
-  };
-});
+interface ImportMetaEnv {
+  readonly VITE_GOOGLE_CLIENT_ID: string
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}

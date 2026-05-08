@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Users, CheckCircle, Clock, Search, Plus, X, MapPin, DollarSign, FileText, TrendingUp, Eye, MessageCircle, AlertCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { Briefcase, Users, CheckCircle, Clock, Search, Plus, X, MapPin, DollarSign, FileText, TrendingUp, Eye, MessageCircle, AlertCircle, RefreshCw, ChevronRight, LayoutPanelTop, Star, Target, ArrowUpRight, Loader2 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RecruiterDashboard = ({ stats: initialStats }: any) => {
   const { user } = useAuth();
@@ -17,28 +17,7 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
   const [loading, setLoading] = useState(true);
 
   const unreadNotifications = notifications.filter((notif) => !notif.is_read);
-  const unreadCount = unreadNotifications.length;
 
-  const fetchNotifications = async () => {
-    try {
-      const res = await axios.get(`/api/chat/notifications/${user?.id}`);
-      setNotifications(res.data);
-    } catch (err) {
-      console.error('Failed to fetch recruiter notifications:', err);
-    }
-  };
-
-  const markAllNotificationsRead = async () => {
-    if (!user?.id) return;
-    try {
-      await axios.put(`/api/chat/notifications/${user.id}/read`);
-      await fetchNotifications();
-    } catch (err) {
-      console.error('Failed to mark notifications read:', err);
-    }
-  };
-  
-  // Job Form State
   const [jobForm, setJobForm] = useState({
     title: '',
     company: '',
@@ -51,12 +30,14 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
 
   const fetchRecruiterData = async () => {
     try {
-      const [statsRes, appsRes] = await Promise.all([
+      const [statsRes, appsRes, notifRes] = await Promise.all([
         axios.get('/api/recruiter/stats', { params: { userId: user?.id } }),
-        axios.get(`/api/jobs/applications/recruiter/${user?.id}`)
+        axios.get(`/api/jobs/applications/recruiter/${user?.id}`),
+        axios.get(`/api/chat/notifications/${user?.id}`)
       ]);
       setStats(statsRes.data);
       setApplications(appsRes.data);
+      setNotifications(notifRes.data);
     } catch (err) {
       console.error('Failed to fetch recruiter data:', err);
     } finally {
@@ -65,9 +46,7 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
   };
 
   useEffect(() => {
-    if (!user?.id) return;
-    fetchRecruiterData();
-    fetchNotifications();
+    if (user?.id) fetchRecruiterData();
   }, [user]);
 
   const handlePostJob = async (e: React.FormEvent) => {
@@ -110,402 +89,359 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
     }
   };
 
-  const openShortlistModal = (app: any) => {
-    setSelectedApp(app);
-    setShortlistMessage(`Congratulations! You have been shortlisted for the ${app.job_title} position. We'd like to schedule an interview.`);
-    setShowShortlistModal(true);
-  };
-
-  const applicationData = [
-    { name: 'Mon', apps: 12 },
-    { name: 'Tue', apps: 19 },
-    { name: 'Wed', apps: 15 },
-    { name: 'Thu', apps: 22 },
-    { name: 'Fri', apps: 30 },
-    { name: 'Sat', apps: 10 },
-    { name: 'Sun', apps: 8 },
-  ];
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+    <div className="space-y-10 pb-20">
+      {/* Header Section */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-neon-cyan">Recruiter Dashboard</h2>
-          <p className="text-gray-500 dark:text-neon-light font-medium">Manage your job postings and candidate applications.</p>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Talent Acquisition</h2>
+          <p className="text-slate-500 font-medium mt-1">Orchestrate your hiring pipeline with neural candidate matching.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {unreadNotifications.length > 0 && (
-            <div className="px-4 py-2 bg-amber-100 dark:bg-neon-teal/30 text-amber-800 dark:text-neon-cyan rounded-full text-sm font-semibold transition-colors duration-300">
-              {unreadNotifications.length} new notification{unreadNotifications.length === 1 ? '' : 's'}
-            </div>
-          )}
-          <button 
+        <div className="flex items-center gap-3">
+          <div className="relative">
+             <button className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all relative">
+                <MessageCircle size={20} className="text-slate-600 dark:text-slate-400" />
+                {unreadNotifications.length > 0 && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-indigo-600 rounded-full border-2 border-white dark:border-slate-900"></span>
+                )}
+             </button>
+          </div>
+          <button
             onClick={() => setShowPostModal(true)}
-            className="px-6 py-3 bg-indigo-600 dark:bg-neon-cyan text-white dark:text-neon-dark rounded-2xl font-bold shadow-lg shadow-indigo-200 dark:shadow-neon-cyan hover:bg-indigo-700 dark:hover:bg-neon-light transition-all flex items-center gap-2"
+            className="btn-primary px-6 py-3.5 text-[10px]"
           >
-            <Plus className="h-5 w-5" />
-            Post a Job
+            <Plus size={18} />
+            Initialize Job Requisition
           </button>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="Active Jobs" value={stats?.activeJobs || 0} icon={<Briefcase className="text-indigo-600" />} color="bg-indigo-50" />
-        <StatCard title="Total Apps" value={stats?.totalApps || 0} icon={<Users className="text-amber-600" />} color="bg-amber-50" />
-        <StatCard title="Shortlisted" value={stats?.shortlisted || 0} icon={<CheckCircle className="text-emerald-600" />} color="bg-emerald-50" />
-        <StatCard title="Pending Review" value={stats?.pending || 0} icon={<Clock className="text-blue-600" />} color="bg-blue-50" />
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard title="Active Requisitions" value={stats?.activeJobs || 0} icon={<Briefcase size={20} />} trend="+2 this week" color="indigo" />
+        <MetricCard title="Total Candidates" value={stats?.totalApps || 0} icon={<Users size={20} />} trend="+15% MoM" color="amber" />
+        <MetricCard title="Shortlisted Talent" value={stats?.shortlisted || 0} icon={<Target size={20} />} trend="High Efficiency" color="emerald" />
+        <MetricCard title="Awaiting Audit" value={stats?.pending || 0} icon={<Clock size={20} />} trend="Review Required" color="rose" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 p-4 rounded-2xl border border-blue-200 dark:border-blue-900/40">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 dark:text-neon-light font-medium">Avg Time to Hire</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-neon-cyan mt-1">14 days</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Applications List */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="glass-card p-10">
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-600/10 text-indigo-600 rounded-xl">
+                  <Users size={20} />
                 </div>
-                <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">Pipeline Activity</h3>
               </div>
-            </div>
-            <div className="bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 p-4 rounded-2xl border border-green-200 dark:border-green-900/40">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 dark:text-neon-light font-medium">Conversion Rate</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-neon-cyan mt-1">32%</p>
-                </div>
-                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-neon-dark p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-neon-teal">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-neon-cyan">Applications Management</h3>
               <div className="flex gap-2">
-                <span className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-neon-cyan text-xs font-bold rounded-full">
-                  {applications.length} Total
-                </span>
+                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-500 rounded-lg">{applications.length} Profiles</span>
               </div>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left border-b border-gray-100 dark:border-neon-teal">
-                    <th className="pb-4 font-bold text-gray-500 dark:text-neon-light text-sm">Candidate</th>
-                    <th className="pb-4 font-bold text-gray-500 dark:text-neon-light text-sm">Job Role</th>
-                    <th className="pb-4 font-bold text-gray-500 dark:text-neon-light text-sm">Status</th>
-                    <th className="pb-4 font-bold text-gray-500 dark:text-neon-light text-sm text-right">Action</th>
+                  <tr className="text-left border-b border-slate-100 dark:border-slate-800">
+                    <th className="pb-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Candidate Profile</th>
+                    <th className="pb-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Target Role</th>
+                    <th className="pb-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Neural Status</th>
+                    <th className="pb-5 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-neon-teal">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {applications.map((app) => (
-                    <tr key={app.id} className="group hover:bg-gray-50 dark:hover:bg-neon-gray transition-all">
-                      <td className="py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-700 dark:text-neon-cyan font-bold">
+                    <motion.tr 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      key={app.id} 
+                      className="group hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-all"
+                    >
+                      <td className="py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-black text-lg shadow-inner ring-1 ring-indigo-500/10">
                             {app.student_name.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900 dark:text-neon-light">{app.student_name}</p>
-                            <p className="text-xs text-gray-500 dark:text-neon-light/50">{app.student_email}</p>
+                            <p className="text-sm font-black text-slate-900 dark:text-white leading-none">{app.student_name}</p>
+                            <p className="text-[10px] text-slate-400 font-bold mt-1 tracking-tight">{app.student_email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4">
-                        <p className="text-sm font-medium text-gray-700 dark:text-neon-light">{app.job_title}</p>
+                      <td className="py-5">
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{app.job_title}</p>
+                        <p className="text-[8px] text-slate-400 uppercase tracking-widest font-black mt-1">Application Sync'd</p>
                       </td>
-                      <td className="py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          app.status === 'shortlisted' 
-                            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
-                            : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                      <td className="py-5">
+                        <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest inline-block ${
+                          app.status === 'shortlisted'
+                            ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                            : 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20'
                         }`}>
                           {app.status}
                         </span>
                       </td>
-                      <td className="py-4 text-right">
-                        {app.status !== 'shortlisted' && (
-                          <button 
-                            onClick={() => openShortlistModal(app)}
-                            className="px-4 py-2 bg-indigo-600 dark:bg-neon-cyan text-white dark:text-neon-dark text-xs font-bold rounded-xl hover:bg-indigo-700 dark:hover:bg-neon-light transition-all opacity-0 group-hover:opacity-100"
-                          >
-                            Shortlist
-                          </button>
-                        )}
+                      <td className="py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                           <button className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                              <Eye size={16} />
+                           </button>
+                           {app.status !== 'shortlisted' && (
+                            <button
+                              onClick={() => {
+                                setSelectedApp(app);
+                                setShortlistMessage(`Congratulations! You have been shortlisted for the ${app.job_title} position.`);
+                                setShowShortlistModal(true);
+                              }}
+                              className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-400 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
+                            >
+                              Shortlist
+                            </button>
+                           )}
+                        </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
-                  {applications.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="py-12 text-center text-gray-400 font-medium">
-                        No applications received yet.
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
           </div>
-
-
         </div>
 
-        <div className="space-y-8">
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-neon-dark p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-neon-teal">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-neon-cyan mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <button 
-                onClick={() => setShowPostModal(true)}
-                className="w-full px-4 py-3 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-900/40 transition-all flex items-center justify-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Post New Job
-              </button>
-              <a 
-                href="#network"
-                className="w-full px-4 py-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-xl font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/40 transition-all flex items-center justify-center gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                View Candidates
-              </a>
-              <a 
-                href="#network"
-                className="w-full px-4 py-3 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl font-semibold hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-all flex items-center justify-center gap-2"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Send Messages
-              </a>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-neon-dark p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-neon-teal">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-neon-cyan">Notifications</h3>
-                <p className="text-sm text-gray-500 dark:text-neon-light">All recruiter activity updates.</p>
+        {/* Sidebar Analytics */}
+        <div className="lg:col-span-4 space-y-8">
+           {/* Productivity Card */}
+           <div className="glass-card p-8 bg-indigo-600 text-white border-none shadow-2xl shadow-indigo-500/30 overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-x-10 translate-y-10"></div>
+              <h4 className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.3em] mb-6">Hiring Efficiency</h4>
+              <div className="flex items-end justify-between gap-4">
+                 <div>
+                    <h5 className="text-4xl font-black leading-none">14.2</h5>
+                    <p className="text-[10px] font-bold text-indigo-200 mt-2">Avg. Days to Hire</p>
+                 </div>
+                 <div className="h-20 w-32">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <LineChart data={[ {v:10}, {v:15}, {v:12}, {v:18}, {v:14} ]}>
+                          <Line type="monotone" dataKey="v" stroke="white" strokeWidth={3} dot={false} />
+                       </LineChart>
+                    </ResponsiveContainer>
+                 </div>
               </div>
-              <button
-                onClick={markAllNotificationsRead}
-                className="text-indigo-600 dark:text-neon-cyan text-sm font-semibold hover:text-indigo-800 dark:hover:text-neon-light"
-              >
-                Mark all read
-              </button>
-            </div>
-            <div className="space-y-3">
-              {unreadNotifications.length === 0 && (
-                <div className="py-8 text-center text-gray-400 dark:text-gray-600">No new notifications.</div>
-              )}
-              {unreadNotifications.slice(0, 5).map((notif) => (
-                <div key={notif.id} className="p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-900/30">
-                  <p className="text-sm text-gray-700 dark:text-neon-light">{notif.content}</p>
-                  <p className="text-xs text-gray-500 dark:text-neon-light/50 mt-2">{new Date(notif.created_at).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-            {notifications.length > 5 && (
-              <p className="mt-4 text-xs text-gray-500 dark:text-neon-light/50">Showing the latest 5 notifications.</p>
-            )}
-          </div>
-          
+           </div>
 
+           {/* Quick Stats Radar/Chart */}
+           <div className="glass-card p-8">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Pipeline Composition</h4>
+              <div className="h-[200px] w-full">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[ {n:'Eng', v:45}, {n:'Des', v:25}, {n:'Prod', v:20}, {n:'Mark', v:10} ]}>
+                       <Bar dataKey="v" radius={[6, 6, 0, 0]}>
+                          {[0,1,2,3].map((entry, index) => (
+                             <Cell key={`cell-${index}`} fill={['#4f46e5', '#06b6d4', '#8b5cf6', '#10b981'][index]} />
+                          ))}
+                       </Bar>
+                       <XAxis dataKey="n" axisLine={false} tickLine={false} tick={{fontSize:10, fontWeight:700, fill:'#94a3b8'}} />
+                    </BarChart>
+                 </ResponsiveContainer>
+              </div>
+           </div>
+
+           {/* Recent System Notifications */}
+           <div className="glass-card p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Neural Logs</h4>
+                <button className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">View All</button>
+              </div>
+              <div className="space-y-4">
+                 {notifications.slice(0, 3).map((notif, i) => (
+                    <div key={i} className="flex gap-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0"></div>
+                       <p className="text-[10px] text-slate-600 dark:text-slate-400 font-bold leading-relaxed">{notif.content}</p>
+                    </div>
+                 ))}
+              </div>
+           </div>
         </div>
       </div>
 
       {/* Post Job Modal */}
-      {showPostModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neon-dark w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-neon-teal flex justify-between items-center">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-neon-cyan">Post New Job Opening</h3>
-              <button onClick={() => setShowPostModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-neon-gray rounded-xl transition-all">
-                <X className="h-6 w-6 text-gray-400 dark:text-neon-light" />
-              </button>
-            </div>
-            <form onSubmit={handlePostJob} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Job Title</label>
-                  <input 
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                    placeholder="e.g. Senior Frontend Developer"
-                    value={jobForm.title}
-                    onChange={e => setJobForm({...jobForm, title: e.target.value})}
-                  />
+      <AnimatePresence>
+        {showPostModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-2xl overflow-hidden shadow-2xl border-indigo-500/20"
+            >
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-indigo-600 text-white rounded-2xl"><Plus size={20} /></div>
+                   <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Post New Requisition</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Company Name</label>
-                  <input 
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                    placeholder="e.g. PathForge Tech"
-                    value={jobForm.company}
-                    onChange={e => setJobForm({...jobForm, company: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Location</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3.5 h-5 w-5 text-gray-400 dark:text-neon-light" />
-                    <input 
-                      required
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                      placeholder="Remote / City"
-                      value={jobForm.location}
-                      onChange={e => setJobForm({...jobForm, location: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Salary Range</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3.5 h-5 w-5 text-gray-400 dark:text-neon-light" />
-                    <input 
-                      required
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                      placeholder="e.g. $80k - $120k"
-                      value={jobForm.salaryRange}
-                      onChange={e => setJobForm({...jobForm, salaryRange: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Job Type</label>
-                  <select 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                    value={jobForm.type}
-                    onChange={e => setJobForm({...jobForm, type: e.target.value})}
-                  >
-                    <option>Full-time</option>
-                    <option>Part-time</option>
-                    <option>Contract</option>
-                    <option>Internship</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Job Description</label>
-                <textarea 
-                  required
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                  placeholder="Describe the role and responsibilities..."
-                  value={jobForm.description}
-                  onChange={e => setJobForm({...jobForm, description: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Requirements (comma separated)</label>
-                <input 
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                  placeholder="React, TypeScript, Node.js, AWS"
-                  value={jobForm.requirements}
-                  onChange={e => setJobForm({...jobForm, requirements: e.target.value})}
-                />
-              </div>
-
-              <div className="pt-4 flex gap-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowPostModal(false)}
-                  className="flex-1 py-3 bg-gray-100 dark:bg-neon-gray text-gray-700 dark:text-neon-light rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-neon-teal transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-3 bg-indigo-600 dark:bg-neon-cyan text-white dark:text-neon-dark rounded-2xl font-bold hover:bg-indigo-700 dark:hover:bg-neon-light transition-all shadow-lg shadow-indigo-200 dark:shadow-neon-cyan/50"
-                >
-                  Post Job
+                <button onClick={() => setShowPostModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                  <X size={24} className="text-slate-400" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+              
+              <form onSubmit={handlePostJob} className="p-10 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <InputGroup label="Job Title" value={jobForm.title} onChange={(val: string) => setJobForm({...jobForm, title: val})} placeholder="e.g. Senior Neural Architect" />
+                  <InputGroup label="Enterprise Name" value={jobForm.company} onChange={(val: string) => setJobForm({...jobForm, company: val})} placeholder="e.g. Cyberdyne Systems" />
+                  <InputGroup label="Target Location" value={jobForm.location} onChange={(val: string) => setJobForm({...jobForm, location: val})} placeholder="e.g. Remote / Hybrid" icon={<MapPin size={14} />} />
+                  <InputGroup label="Compensation Matrix" value={jobForm.salaryRange} onChange={(val: string) => setJobForm({...jobForm, salaryRange: val})} placeholder="e.g. $140k - $190k" icon={<DollarSign size={14} />} />
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Employment Architecture</label>
+                    <select
+                      className="input-base appearance-none"
+                      value={jobForm.type}
+                      onChange={e => setJobForm({...jobForm, type: e.target.value})}
+                    >
+                      <option>Full-time</option>
+                      <option>Contract</option>
+                      <option>Venture-based</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Core Description</label>
+                  <textarea
+                    required
+                    className="input-base h-32 resize-none"
+                    placeholder="Define the scope and impact of this requisition..."
+                    value={jobForm.description}
+                    onChange={e => setJobForm({...jobForm, description: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Required Vectors (Comma Separated)</label>
+                  <input
+                    required
+                    className="input-base"
+                    placeholder="React, Rust, PyTorch, Kubernetes"
+                    value={jobForm.requirements}
+                    onChange={e => setJobForm({...jobForm, requirements: e.target.value})}
+                  />
+                </div>
+
+                <div className="pt-6 flex gap-4">
+                  <button type="button" onClick={() => setShowPostModal(false)} className="btn-secondary flex-1 py-4 text-[10px]">Discard Draft</button>
+                  <button type="submit" className="btn-primary flex-1 py-4 text-[10px]">Finalize & Post Requisition</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Shortlist Modal */}
-      {showShortlistModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neon-dark w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-neon-teal flex justify-between items-center">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-neon-cyan">Shortlist Candidate</h3>
-              <button onClick={() => setShowShortlistModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-neon-gray rounded-xl transition-all">
-                <X className="h-6 w-6 text-gray-400 dark:text-neon-light" />
-              </button>
-            </div>
-            <form onSubmit={handleShortlist} className="p-6 space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-neon-light mb-4">
-                  Shortlisting <span className="font-bold text-gray-900 dark:text-neon-cyan">{selectedApp?.student_name}</span> for <span className="font-bold text-gray-900 dark:text-neon-cyan">{selectedApp?.job_title}</span>.
-                </p>
-                <label className="block text-sm font-bold text-gray-700 dark:text-neon-cyan mb-1">Message to Student</label>
-                <textarea 
-                  required
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan"
-                  placeholder="Add interview details, next steps, or a congratulatory note..."
-                  value={shortlistMessage}
-                  onChange={e => setShortlistMessage(e.target.value)}
-                />
+      <AnimatePresence>
+        {showShortlistModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-lg overflow-hidden shadow-2xl border-indigo-500/20"
+            >
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-emerald-600 text-white rounded-2xl"><Target size={20} /></div>
+                   <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Calibrate Talent Match</h3>
+                </div>
+                <button onClick={() => setShowShortlistModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                  <X size={24} className="text-slate-400" />
+                </button>
               </div>
+              
+              <form onSubmit={handleShortlist} className="p-10 space-y-6">
+                <div>
+                  <p className="text-xs text-slate-500 font-bold leading-relaxed mb-6">
+                    Confirming shortlist for <span className="text-slate-900 dark:text-white font-black underline decoration-indigo-500">{selectedApp?.student_name}</span> for the role of <span className="font-black text-indigo-600 uppercase">{selectedApp?.job_title}</span>.
+                  </p>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Calibration Message</label>
+                  <textarea
+                    required
+                    className="input-base h-40 resize-none mt-2"
+                    placeholder="Enter customized onboarding message or interview scheduling coordinates..."
+                    value={shortlistMessage}
+                    onChange={e => setShortlistMessage(e.target.value)}
+                  />
+                </div>
 
-              <div className="pt-4 flex gap-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowShortlistModal(false)}
-                  className="flex-1 py-3 bg-gray-100 dark:bg-neon-gray text-gray-700 dark:text-neon-light rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-neon-teal transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-bold hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 dark:shadow-emerald-500/50"
-                >
-                  Confirm Shortlist
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                <div className="pt-6 flex gap-4">
+                  <button type="button" onClick={() => setShowShortlistModal(false)} className="btn-secondary flex-1 py-4 text-[10px]">Cancel</button>
+                  <button type="submit" className="btn-primary flex-1 py-4 text-[10px] bg-emerald-600 hover:bg-emerald-500 border-none shadow-emerald-500/20">Authorize Shortlist</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-const StatCard = ({ title, value, icon, color }: any) => {
-  const { isDark } = useTheme();
-  const colorBgMap: any = {
-    'bg-indigo-50': { light: '#eef2ff', dark: '#312e81' },
-    'bg-amber-50': { light: '#fffbeb', dark: '#78350f' },
-    'bg-emerald-50': { light: '#f0fdf4', dark: '#064e3b' },
-    'bg-blue-50': { light: '#eff6ff', dark: '#0c2340' },
-    'bg-red-50': { light: '#fef2f2', dark: '#7f1d1d' },
+const MetricCard = ({ title, value, icon, trend, color }: any) => {
+  const colors: any = {
+    indigo: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 ring-indigo-500/20',
+    amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-amber-500/20',
+    emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 ring-emerald-500/20',
+    rose: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 ring-rose-500/20',
   };
 
-  const bgColor = colorBgMap[color];
-  const bgColorValue = isDark ? bgColor?.dark : bgColor?.light;
-
   return (
-    <div className="bg-white dark:bg-neon-dark p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-neon-teal flex items-center transition-colors duration-300">
-      <div className="p-4 rounded-2xl mr-4 transition-colors duration-300" style={{ backgroundColor: bgColorValue || '#f3f4f6' }}>
+    <motion.div 
+      whileHover={{ y: -5 }}
+      className="glass-card p-6 flex items-center transition-all group"
+    >
+      <div className={`p-4 rounded-2xl mr-5 ring-1 ${colors[color]} group-hover:scale-110 transition-transform duration-500`}>
         {icon}
       </div>
       <div>
-        <p className="text-sm text-gray-500 dark:text-neon-light font-medium">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-neon-cyan">{value}</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+        <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{value}</p>
+        <p className="text-[9px] font-bold text-slate-400 mt-2 flex items-center gap-1">
+           <ArrowUpRight size={10} className="text-emerald-500" /> {trend}
+        </p>
       </div>
-    </div>
+    </motion.div>
   );
 };
+
+const InputGroup = ({ label, value, onChange, placeholder, icon, type = "text" }: any) => (
+  <div className="space-y-2">
+    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">{label}</label>
+    <div className="relative">
+      {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{icon}</div>}
+      <input 
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`input-base ${icon ? 'pl-12' : ''}`}
+        placeholder={placeholder}
+        required
+      />
+    </div>
+  </div>
+);
 
 export default RecruiterDashboard;

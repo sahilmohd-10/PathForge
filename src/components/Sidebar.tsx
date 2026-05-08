@@ -1,6 +1,20 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Briefcase, User, MessageSquare, LogOut, TrendingUp, Users, Database, Table, X, Newspaper } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Compass, 
+  Route, 
+  FileSearch, 
+  Video, 
+  Github, 
+  Briefcase, 
+  User, 
+  LogOut,
+  X,
+  PlusSquare,
+  Users,
+  Database
+} from 'lucide-react';
 
 const Sidebar = ({
   activeTab,
@@ -15,47 +29,58 @@ const Sidebar = ({
 }) => {
   const { logout, user } = useAuth();
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['student', 'recruiter', 'admin'] },
-    { id: 'career', label: 'Career Engine', icon: TrendingUp, roles: ['student'] },
-    { id: 'jobs', label: 'Job Board', icon: Briefcase, roles: ['student', 'recruiter', 'admin'] },
-    { id: 'posts', label: 'Posts', icon: Newspaper, roles: ['student', 'recruiter'] },
-    { id: 'network', label: 'Network', icon: MessageSquare, roles: ['student', 'recruiter'] },
-    { id: 'users', label: 'User Management', icon: Users, roles: ['admin'] },
-    { id: 'database', label: 'Database', icon: Database, roles: ['admin'] },
-    { id: 'datamatch', label: 'Data Match', icon: Table, roles: ['admin'] },
-    { id: 'profile', label: 'Profile', icon: User, roles: ['student', 'recruiter', 'admin'] },
-  ].filter(item => item.roles.includes(user?.role || 'student'));
+  const navItems = user?.role === 'admin' ? [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'users', label: 'Manage Users', icon: Users },
+    { id: 'adminjobs', label: 'Manage Jobs', icon: Briefcase },
+    { id: 'database', label: 'Database Audit', icon: Database },
+    { id: 'profile', label: 'Profile', icon: User },
+  ] : user?.role === 'recruiter' ? [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'publishjob', label: 'Publish Job', icon: PlusSquare },
+    { id: 'jobs', label: 'Job Board', icon: Briefcase },
+    { id: 'profile', label: 'Profile', icon: User },
+  ] : [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'career', label: 'Career Engine', icon: Compass },
+    { id: 'roadmap', label: 'Roadmap', icon: Route },
+    { id: 'resume', label: 'Resume Analyzer', icon: FileSearch },
+    { id: 'mockinterview', label: 'Interviews', icon: Video },
+    { id: 'portfolio', label: 'Portfolio', icon: Github },
+    { id: 'jobs', label: 'Job Board', icon: Briefcase },
+    { id: 'profile', label: 'Profile', icon: User },
+  ];
 
   return (
     <>
+      {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 md:hidden ${mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 md:hidden ${mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setMobileOpen(false)}
       />
 
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-full transform overflow-y-auto bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out md:static md:w-64 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 shadow-xl md:shadow-none`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-100 transform transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}
       >
-        {/* Logo Section */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        {/* Header/Logo */}
+        <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center shadow-lg text-white font-bold text-xl">
+            <div className="w-10 h-10 bg-[#0081C9] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20">
               P
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">PathForge</h1>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">AI Career Engine</p>
+              <h1 className="text-xl font-black text-[#0f172a] leading-none">PathForge</h1>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">AI CAREER ENGINE</p>
             </div>
           </div>
-          <button onClick={() => setMobileOpen(false)} className="md:hidden p-2 text-slate-400">
+          <button onClick={() => setMobileOpen(false)} className="md:hidden p-2 text-slate-400 hover:text-slate-900 transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 px-4 space-y-1.5 py-6">
-          {menuItems.map((item) => {
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
@@ -65,40 +90,42 @@ const Sidebar = ({
                   window.location.hash = item.id;
                   setMobileOpen(false);
                 }}
-                aria-current={isActive ? 'page' : undefined}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all ${
-                  isActive 
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400 shadow-sm border border-primary-100 dark:border-primary-800' 
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400'
+                className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all ${
+                  isActive
+                    ? 'bg-[#EBF7FF] text-[#0081C9]'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
-                <item.icon size={20} className={isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 group-hover:text-primary-500'} />
-                {item.label}
+                <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* User Profile Section */}
-        <div className="mt-auto p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-          <div className="flex items-center gap-3 p-2 mb-4">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="avatar" className="h-10 w-10 rounded-lg object-cover shadow-sm border border-slate-200 dark:border-slate-700" />
-            ) : (
-              <div className="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-400 flex items-center justify-center font-bold">
-                {user?.fullName?.charAt(0) || 'U'}
-              </div>
-            )}
+        {/* User Profile Card */}
+        <div className="p-4 border-t border-slate-50">
+          <div className="flex items-center gap-3 p-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
+                  <User size={20} />
+                </div>
+              )}
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.fullName}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role}</p>
+              <p className="text-sm font-black text-slate-900 truncate">{user?.fullName || 'User Name'}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user?.role || 'Student'}</p>
             </div>
           </div>
+
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#FFF1F1] text-[#FF4D4D] text-sm font-black rounded-xl hover:bg-[#FFE4E4] transition-colors"
           >
-            <LogOut size={16} />
+            <LogOut size={18} />
             Sign Out
           </button>
         </div>

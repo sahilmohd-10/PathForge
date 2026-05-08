@@ -1,10 +1,31 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Brain, Sparkles, ChevronRight, RefreshCw, TrendingUp, Target, Zap, DollarSign, Activity, Lightbulb, BookOpen, Briefcase, Search, Upload, FileText } from 'lucide-react';
+import { 
+  RefreshCw, 
+  Upload, 
+  Search, 
+  ArrowRight, 
+  Zap, 
+  Target, 
+  TrendingUp, 
+  DollarSign, 
+  Sparkles,
+  ChevronRight,
+  BookOpen,
+  Activity,
+  Lightbulb,
+  FileText,
+  Briefcase,
+  GraduationCap,
+  Globe,
+  ExternalLink,
+  Code
+} from 'lucide-react';
 import axios from 'axios';
-import { motion } from 'framer-motion';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import PageShell from '../components/PageShell';
+import TwilioShare from '../components/TwilioShare';
 
 interface ResumeData {
   personalInfo: {
@@ -36,9 +57,7 @@ const getSemesterOptions = (educationLevel: string) => {
   if (educationLevel === 'B.Tech') maxSemesters = 8;
   else if (educationLevel === 'B.Sc IT' || educationLevel === 'BCA') maxSemesters = 6;
   else if (educationLevel === 'M.Tech' || educationLevel === 'MCA') maxSemesters = 4;
-
   if (maxSemesters === 0) return [{ value: 'N/A', label: 'Not Applicable (N/A)' }];
-
   const options = [];
   for (let i = 1; i <= maxSemesters; i++) {
     const suffix = i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th';
@@ -50,18 +69,14 @@ const getSemesterOptions = (educationLevel: string) => {
 
 const CareerEngine = () => {
   const { user } = useAuth();
-
   const [resumeData, setResumeData] = useState<ResumeData>({
-    personalInfo: {
-      currentRole: '',
-      careerGoal: ''
-    },
+    personalInfo: { currentRole: '', careerGoal: '' },
     experienceSummary: '',
     skills: '',
     tools: '',
     educationLevel: '',
     semester: '',
-    experienceLevel: ''
+    experienceLevel: '',
   });
 
   const [analyzing, setAnalyzing] = useState(false);
@@ -71,30 +86,15 @@ const CareerEngine = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!user) {
-      setError('Please log in to upload your resume.');
-      return;
-    }
-
+    if (!file || !user) return;
     const formData = new FormData();
     formData.append('resume', file);
     formData.append('userId', user.id.toString());
-
     setUploading(true);
     setError(null);
-
     try {
-      const res = await axios.post('/api/ai/upload-resume', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
+      const res = await axios.post('/api/ai/upload-resume', formData);
       const parsed = res.data.parsed;
-
-      // Attempt to map extracted data to the form
       setResumeData(prev => ({
         ...prev,
         personalInfo: {
@@ -103,49 +103,23 @@ const CareerEngine = () => {
         },
         experienceSummary: parsed.bio || prev.experienceSummary,
         skills: Array.isArray(parsed.skills) ? parsed.skills.join(', ') : prev.skills,
-        experienceLevel: parsed.experience_years ?
-          (parsed.experience_years === 0 ? 'Fresher' :
-            parsed.experience_years <= 3 ? '1-3 years' :
-              parsed.experience_years <= 5 ? '3-5 years' : '5+ years') : prev.experienceLevel,
+        experienceLevel: parsed.experience_years ? (parsed.experience_years === 0 ? 'Fresher' : parsed.experience_years <= 3 ? '1-3 years' : parsed.experience_years <= 5 ? '3-5 years' : '5+ years') : prev.experienceLevel,
         educationLevel: parsed.education || prev.educationLevel
       }));
-
     } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.error || 'Failed to parse resume. Please fill manually.');
+      setError('Failed to parse resume. Please fill manually.');
     } finally {
       setUploading(false);
-      if (e.target) e.target.value = ''; // Reset input
     }
   };
 
   const handleAnalyze = async () => {
-    if (!user) {
-      setError('Please log in to analyze your resume.');
-      return;
-    }
-
-    if (!resumeData.personalInfo.currentRole.trim() || !resumeData.skills.trim()) {
-      setError('Please provide your current role and skills before analyzing.');
-      return;
-    }
-
-    if (!resumeData.educationLevel || !resumeData.semester || !resumeData.experienceLevel || !resumeData.personalInfo.careerGoal.trim()) {
-      setError('Please explicitly define your highest education, semester, experience level, and top career goal.');
-      return;
-    }
-
-    if (!resumeData.experienceSummary.trim()) {
-      setError('Please describe your experience summary for the analysis.');
-      return;
-    }
-
+    if (!user) return setError('Please log in.');
+    if (!resumeData.personalInfo.currentRole.trim() || !resumeData.skills.trim()) return setError('Please fill mandatory fields.');
     setAnalyzing(true);
     setError(null);
-
     try {
       const resumeText = `${resumeData.personalInfo.currentRole} ${resumeData.personalInfo.careerGoal} ${resumeData.experienceSummary} ${resumeData.skills} ${resumeData.tools} ${resumeData.educationLevel} ${resumeData.semester}`;
-
       const profileData = {
         personalInfo: resumeData.personalInfo,
         experience: resumeData.experienceSummary,
@@ -155,433 +129,347 @@ const CareerEngine = () => {
         semester: resumeData.semester,
         experienceLevel: resumeData.experienceLevel
       };
-
-      const analysisRes = await axios.post('/api/ai/unified-analysis', {
-        userId: user?.id,
-        resumeText,
-        profileData
-      });
-
-      setUnifiedResults(analysisRes.data);
+      const res = await axios.post('/api/ai/unified-analysis', { userId: user.id, resumeText, profileData });
+      setUnifiedResults(res.data);
     } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.error || 'Failed to complete comprehensive analysis. Please try again.');
+      setError('Analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
   };
 
-  const handleSearchJobs = () => {
-    if (unifiedResults?.predictedRole) {
-      window.location.hash = `jobs?search=${encodeURIComponent(unifiedResults.predictedRole)}`;
-    } else {
-      window.location.hash = 'jobs';
-    }
-  };
-
-  // Helper variables for charts if results exist
-  const mlResults = unifiedResults?.mlPredictions;
-  const salaryPrediction = mlResults?.salary_prediction || { min: 0, max: 0, currency: 'USD' };
-
-  const resumeGraphData = Array.isArray(mlResults?.resume_breakdown)
-    ? mlResults.resume_breakdown.map((item: any) => ({ name: item.name, value: Number(item.value) || 0 }))
-    : [];
-
-  const radarData = mlResults ? [
-    { subject: 'Market Fit', A: Number(mlResults.market_fit_score) || 0, fullMark: 100 },
-    { subject: 'Growth', A: Number(mlResults.growth_potential) || 0, fullMark: 100 },
-    { subject: 'Stability', A: Math.max(0, 100 - (Number(mlResults.churn_risk) || 0)), fullMark: 100 },
-    { subject: 'Skill Match', A: Number(mlResults.skill_match_score) || 0, fullMark: 100 },
-    { subject: 'Demand', A: 85, fullMark: 100 },
-  ] : [];
-
-  const industryData = Array.isArray(mlResults?.top_matching_industries)
-    ? mlResults.top_matching_industries.map((ind: any) => ({
-      name: ind.industry,
-      value: ind.match_percentage ?? 0
-    }))
-    : [];
-
   return (
-    <PageShell
-      title="AI Career Engine"
-      subtitle="Comprehensive AI & ML trajectory analysis powered by PathForge intelligence"
-    >
-
+    <PageShell title="AI Career Engine" subtitle="Comprehensive AI & ML trajectory analysis powered by PathForge intelligence">
       {error && (
-        <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-400 rounded-2xl flex items-center gap-3 transition-colors duration-300">
-          <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-          <p className="font-medium">{error}</p>
+        <div className="mb-8 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-bold">
+          {error}
         </div>
       )}
 
       {!unifiedResults ? (
-        <div className="space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-neon-dark border border-gray-200 dark:border-neon-teal rounded-3xl p-8 shadow-sm transition-colors duration-300"
-          >
-            <div className="flex items-center justify-between mb-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Sparkles className="h-6 w-6 text-primary-600 dark:text-neon-cyan" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-neon-cyan">Career Snapshot</h3>
+                <Sparkles className="text-[#0081C9]" size={24} />
+                <h3 className="text-xl font-black text-[#0f172a]">Career Snapshot</h3>
               </div>
               <div className="relative">
-                <input
-                  type="file"
-                  accept=".pdf,.txt"
-                  id="resume-upload"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                />
-                <label
-                  htmlFor="resume-upload"
-                  className={`btn-secondary inline-flex items-center gap-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {uploading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  {uploading ? 'Parsing Resume...' : 'Auto-fill from Resume'}
+                <input type="file" id="resume-up" className="hidden" onChange={handleFileUpload} />
+                <label htmlFor="resume-up" className="flex items-center gap-2 px-4 py-2 bg-[#EBF7FF] text-[#0081C9] text-xs font-black uppercase tracking-widest rounded-xl cursor-pointer hover:bg-[#D6EFFF] transition-all">
+                  {uploading ? <RefreshCw className="animate-spin" size={14} /> : <Upload size={14} />}
+                  Auto-fill from Resume
                 </label>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Current / Desired Role <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200"
-                  value={resumeData.personalInfo.currentRole}
-                  onChange={(e) => setResumeData({ ...resumeData, personalInfo: { ...resumeData.personalInfo, currentRole: e.target.value } })}
-                  placeholder="e.g. Software Engineer, Data Analyst"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Career Goal <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200"
-                  value={resumeData.personalInfo.careerGoal}
-                  onChange={(e) => setResumeData({ ...resumeData, personalInfo: { ...resumeData.personalInfo, careerGoal: e.target.value } })}
-                  placeholder="e.g. Build a career in AI / Product Management"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Highest Education <span className="text-red-500">*</span></label>
-                <select
-                  value={resumeData.educationLevel}
-                  onChange={(e) => {
-                    const newEdu = e.target.value;
-                    const options = getSemesterOptions(newEdu);
-                    let newSem = resumeData.semester;
-                    if (newSem !== '' && !options.find(o => o.value === newSem)) {
-                      newSem = '';
-                    }
-                    setResumeData({ ...resumeData, educationLevel: newEdu, semester: newSem });
-                  }}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200"
-                >
-                  <option value="">Select Education</option>
-                  <option>B.Tech</option>
-                  <option>B.Sc IT</option>
-                  <option>BCA</option>
-                  <option>M.Tech</option>
-                  <option>MCA</option>
-                  <option>Self-taught + Certifications</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Semester (If Applicable) <span className="text-red-500">*</span></label>
-                <select
-                  value={resumeData.semester}
-                  onChange={(e) => setResumeData({ ...resumeData, semester: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200"
-                  disabled={!resumeData.educationLevel}
-                >
-                  <option value="">{resumeData.educationLevel ? "Select Semester or N/A" : "Select Education First"}</option>
-                  {getSemesterOptions(resumeData.educationLevel).map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Experience Level <span className="text-red-500">*</span></label>
-                <select
-                  value={resumeData.experienceLevel}
-                  onChange={(e) => setResumeData({ ...resumeData, experienceLevel: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200"
-                >
-                  <option value="">Select Experience Level</option>
-                  <option>Fresher</option>
-                  <option>1-3 years</option>
-                  <option>3-5 years</option>
-                  <option>5+ years</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Technical Skills (comma separated) <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  className="input-base"
-                  value={resumeData.skills}
-                  onChange={(e) => setResumeData({ ...resumeData, skills: e.target.value })}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Tools / Platforms (comma separated)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Git, Docker, Jupyter Notebook, VS Code"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200"
-                  value={resumeData.tools}
-                  onChange={(e) => setResumeData({ ...resumeData, tools: e.target.value })}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-500 dark:text-neon-light uppercase mb-1">Experience Summary <span className="text-red-500">*</span></label>
-                <textarea
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-neon-teal bg-white dark:bg-neon-gray text-gray-900 dark:text-neon-light focus:ring-2 focus:ring-indigo-500 dark:focus:ring-neon-cyan outline-none transition-colors duration-200 h-36 resize-none"
-                  placeholder="Describe your recent work, projects, or internship impact"
-                  value={resumeData.experienceSummary}
-                  onChange={(e) => setResumeData({ ...resumeData, experienceSummary: e.target.value })}
-                />
-              </div>
-            </div>
-          </motion.div>
 
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4 }}
-            onClick={handleAnalyze}
-            disabled={analyzing}
-            className="btn-primary w-full py-5 text-lg flex items-center justify-center gap-3"
-          >
-            {analyzing ? (
-              <>
-                <RefreshCw className="animate-spin h-6 w-6" />
-                Synthesizing Unified Career Prediction...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-6 w-6" />
-                Start Unified AI Career Analysis
-              </>
-            )}
-          </motion.button>
-        </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="space-y-12"
-        >
-          {/* Top Hero Section: Score & Predicted Role */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gradient-to-br from-primary-600 to-primary-800 dark:from-neon-cyan dark:to-neon-teal rounded-3xl p-8 text-white dark:text-neon-darkest flex flex-col justify-between shadow-2xl">
-              <div>
-                <p className="text-primary-100 dark:text-neon-darkest/70 font-bold mb-1 uppercase tracking-wide text-sm">Resume Match Score</p>
-                <h3 className="text-7xl font-black">{unifiedResults.resumeScore}<span className="text-3xl opacity-50">/100</span></h3>
+            <div className="p-10 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">CURRENT / DESIRED ROLE *</label>
+                  <input
+                    type="text"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all"
+                    placeholder="e.g. Software Engineer, Data Analyst"
+                    value={resumeData.personalInfo.currentRole}
+                    onChange={(e) => setResumeData({ ...resumeData, personalInfo: { ...resumeData.personalInfo, currentRole: e.target.value } })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">CAREER GOAL *</label>
+                  <input
+                    type="text"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all"
+                    placeholder="e.g. Build a career in AI / Product Management"
+                    value={resumeData.personalInfo.careerGoal}
+                    onChange={(e) => setResumeData({ ...resumeData, personalInfo: { ...resumeData.personalInfo, careerGoal: e.target.value } })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">HIGHEST EDUCATION *</label>
+                  <select
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] appearance-none transition-all"
+                    value={resumeData.educationLevel}
+                    onChange={(e) => setResumeData({ ...resumeData, educationLevel: e.target.value, semester: '' })}
+                  >
+                    <option value="">Select Education</option>
+                    {['B.Tech', 'B.Sc IT', 'BCA', 'M.Tech', 'MCA', 'Self-taught'].map(opt => <option key={opt}>{opt}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">SEMESTER (IF APPLICABLE) *</label>
+                  <select
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] appearance-none transition-all"
+                    value={resumeData.semester}
+                    onChange={(e) => setResumeData({ ...resumeData, semester: e.target.value })}
+                  >
+                    <option value="">{resumeData.educationLevel ? 'Select Semester' : 'Select Education First'}</option>
+                    {getSemesterOptions(resumeData.educationLevel).map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">EXPERIENCE LEVEL *</label>
+                  <select
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] appearance-none transition-all"
+                    value={resumeData.experienceLevel}
+                    onChange={(e) => setResumeData({ ...resumeData, experienceLevel: e.target.value })}
+                  >
+                    <option value="">Select Experience Level</option>
+                    {['Fresher', 'Junior (1-3y)', 'Mid (3-5y)', 'Senior (5y+)'].map(opt => <option key={opt}>{opt}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">TECHNICAL SKILLS (COMMA SEPARATED) *</label>
+                  <input
+                    type="text"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all"
+                    value={resumeData.skills}
+                    onChange={(e) => setResumeData({ ...resumeData, skills: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">TOOLS / PLATFORMS (COMMA SEPARATED)</label>
+                  <input
+                    type="text"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all"
+                    placeholder="e.g. Git, Docker, Jupyter Notebook, VS Code"
+                    value={resumeData.tools}
+                    onChange={(e) => setResumeData({ ...resumeData, tools: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">EXPERIENCE SUMMARY *</label>
+                  <textarea
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#0081C9] transition-all min-h-[120px]"
+                    placeholder="Describe your recent work, projects, or internship impact"
+                    value={resumeData.experienceSummary}
+                    onChange={(e) => setResumeData({ ...resumeData, experienceSummary: e.target.value })}
+                  />
+                </div>
               </div>
-              <div className="mt-8 flex items-center justify-between">
-                <p className="text-sm text-primary-50 dark:text-neon-darkest/80 max-w-[200px] leading-relaxed">Evaluation based on market demand and your current trajectory.</p>
-                <Sparkles className="h-12 w-12 opacity-30 animate-pulse" />
-              </div>
-            </div>
 
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
-              <div>
-                <p className="text-gray-500 font-bold mb-1 uppercase tracking-wide text-sm">Predicted Target Role</p>
-                <h3 className="text-3xl font-extrabold text-indigo-600">{unifiedResults.predictedRole}</h3>
-                <p className="text-gray-600 mt-4 text-sm leading-relaxed">{unifiedResults.jobDescription}</p>
-              </div>
               <button
-                onClick={handleSearchJobs}
-                className="mt-6 flex items-center justify-center gap-2 bg-slate-900 text-white w-full py-3 rounded-xl font-bold hover:bg-slate-800 transition-all"
+                onClick={handleAnalyze}
+                disabled={analyzing}
+                className="w-full py-5 bg-[#0081C9] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 hover:bg-[#0070B0] transition-all"
               >
-                <Search className="h-4 w-4" />
-                Search Available Jobs
+                {analyzing ? <RefreshCw className="animate-spin" /> : <Sparkles />}
+                {analyzing ? 'Processing Analysis...' : 'Launch Intelligence Audit'}
               </button>
             </div>
           </div>
-
-          {/* ML Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm text-center">
-              <Target className="h-5 w-5 text-indigo-600 mx-auto mb-2" />
-              <div className="text-2xl font-black text-gray-900">{mlResults?.market_fit_score ?? 0}%</div>
-              <span className="text-xs font-bold text-gray-500 uppercase">Market Fit</span>
-            </div>
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm text-center">
-              <TrendingUp className="h-5 w-5 text-emerald-600 mx-auto mb-2" />
-              <div className="text-2xl font-black text-gray-900">{mlResults?.growth_potential ?? 0}%</div>
-              <span className="text-xs font-bold text-gray-500 uppercase">Growth</span>
-            </div>
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm text-center">
-              <Zap className="h-5 w-5 text-amber-600 mx-auto mb-2" />
-              <div className="text-2xl font-black text-gray-900">{unifiedResults.resumeScore ?? 0}%</div>
-              <span className="text-xs font-bold text-gray-500 uppercase">Readiness</span>
-            </div>
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm text-center">
-              <DollarSign className="h-5 w-5 text-green-600 mx-auto mb-2" />
-              <div className="text-sm font-black text-gray-900">
-                {salaryPrediction.min.toLocaleString()} - {salaryPrediction.max.toLocaleString()}
-              </div>
-              <span className="text-xs font-bold text-gray-500 uppercase">Est. Salary</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Areas of Improvement */}
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-              <h4 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Activity className="h-5 w-5 text-indigo-600" />
-                Areas of Improvement
-              </h4>
-              <ul className="space-y-4">
-                {unifiedResults.overallImprovements.map((tip: string, i: number) => (
-                  <li key={i} className="flex items-start text-sm text-gray-700 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <ChevronRight className="h-5 w-5 text-indigo-500 mr-2 shrink-0" />
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Radar / Graph Breakdown (if available) */}
-            {resumeGraphData.length > 0 && (
-              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-center">
-                <h4 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-indigo-600" />
-                  Profile Breakdown
-                </h4>
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={resumeGraphData} layout="vertical" margin={{ top: 0, right: 0, left: -16, bottom: 0 }}>
-                      <XAxis type="number" hide domain={[0, 100]} />
-                      <YAxis dataKey="name" type="category" width={90} tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }} />
-                      <Tooltip formatter={(value: any) => `${value}%`} cursor={{ fill: '#f8fafc' }} />
-                      <Bar dataKey="value" radius={[0, 8, 8, 0]} fill="#4f46e5" barSize={16} />
-                    </BarChart>
-                  </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="space-y-10 pb-20">
+          {/* Result Card (Image 5) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+            <div className="lg:col-span-5 bg-[#0081C9] p-12 text-white relative flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-x-10 translate-y-10"></div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-6">RESUME MATCH SCORE</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-8xl font-black">{unifiedResults.resumeScore}</span>
+                  <span className="text-4xl font-black opacity-40">/100</span>
                 </div>
               </div>
-            )}
+              <div className="mt-12">
+                <p className="text-sm font-medium leading-relaxed opacity-90">
+                  Evaluation based on market demand and your current trajectory.
+                </p>
+                <div className="mt-8 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                    <Sparkles size={20} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="lg:col-span-7 p-12 flex flex-col justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">PREDICTED TARGET ROLE</p>
+                <h3 className="text-4xl font-black text-[#4F46E5] mb-6 tracking-tight">{unifiedResults.predictedRole}</h3>
+                <p className="text-sm text-slate-600 font-medium leading-relaxed mb-8">
+                  {unifiedResults.jobDescription}
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button className="flex-1 py-4 bg-[#0F172A] text-white font-black rounded-2xl flex items-center justify-center gap-3 hover:bg-black transition-all">
+                  <Search size={20} />
+                  Search Available Jobs
+                </button>
+                {user && (
+                  <TwilioShare 
+                    userId={user.id} 
+                    featureName="Unified Talent Profiling" 
+                    summary={`Readiness: ${unifiedResults.resumeScore}%. Target: ${unifiedResults.predictedRole}. Market Fit: ${unifiedResults.mlPredictions.market_fit_score}%.`} 
+                  />
+                )}
+              </div>
+            </div>
           </div>
 
-          <hr className="border-gray-100" />
+          {/* Metrics Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <MetricBox label="MARKET FIT" value={`${unifiedResults.mlPredictions.market_fit_score}%`} icon={<Target size={16} className="text-[#6366F1]" />} />
+            <MetricBox label="GROWTH" value={typeof unifiedResults.mlPredictions.growth_potential === 'number' ? `${unifiedResults.mlPredictions.growth_potential}%` : unifiedResults.mlPredictions.growth_potential} icon={<TrendingUp size={16} className="text-[#10B981]" />} />
+            <MetricBox label="READINESS" value={`${unifiedResults.resumeScore}%`} icon={<Zap size={16} className="text-[#F59E0B]" />} />
+            <MetricBox label="EST. SALARY" value={unifiedResults.mlPredictions.salary_prediction ? `$${(unifiedResults.mlPredictions.salary_prediction.min/1000).toFixed(0)}k - ${(unifiedResults.mlPredictions.salary_prediction.max/1000).toFixed(0)}k` : "60k - 120k"} icon={<DollarSign size={16} className="text-[#10B981]" />} />
+          </div>
 
-          {/* Deep Dive: Topics to Cover for Skill Gaps */}
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <Lightbulb className="h-6 w-6 text-yellow-500" />
-              Skill Gaps & Required Topics
-            </h3>
-            {unifiedResults.skillGaps.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {unifiedResults.skillGaps.map((gap, i) => (
-                  <div key={i} className="bg-white p-6 rounded-3xl border border-yellow-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h4 className="font-black text-lg text-gray-900 mb-4 pb-4 border-b border-gray-100 flex items-center justify-between">
-                      {gap.missing_skill}
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-[10px] uppercase rounded-full tracking-wider">Gap Priority</span>
-                    </h4>
-                    <p className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">Topics to master:</p>
-                    <ul className="space-y-2">
-                      {gap.topics_to_cover.map((topic, tIdx) => (
-                        <li key={tIdx} className="text-sm font-medium text-gray-700 flex items-center before:content-[''] before:block before:w-1.5 before:h-1.5 before:bg-indigo-500 before:rounded-full before:mr-3">
-                          {topic}
-                        </li>
-                      ))}
-                    </ul>
+          {/* Secondary Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="bg-white rounded-[32px] p-10 border border-slate-100 shadow-sm">
+              <h4 className="text-xl font-black text-[#0f172a] mb-8 flex items-center gap-3">
+                <Activity className="text-[#0081C9]" /> Areas of Improvement
+              </h4>
+              <div className="space-y-4">
+                {unifiedResults.overallImprovements.map((tip, i) => (
+                  <div key={i} className="flex items-start gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-all">
+                    <ChevronRight size={18} className="text-blue-500 shrink-0" />
+                    <p className="text-sm text-slate-600 font-medium">{tip}</p>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="bg-emerald-50 text-emerald-800 p-6 rounded-2xl border border-emerald-100 font-medium">
-                Great job! You have no major foundational skill gaps for your predicted role. Focus on advanced topics.
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* Recommended Courses */}
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <BookOpen className="h-6 w-6 text-blue-500" />
-              Recommended Online Courses
-            </h3>
-            {unifiedResults.recommendedCourses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {unifiedResults.recommendedCourses.map((course, i) => {
-                  let href = course.link;
-                  if (!href || href.trim() === '' || href.includes('example.com')) {
-                    href = `https://www.google.com/search?q=${encodeURIComponent(`${course.name} course ${course.platform}`)}`;
-                  }
-
-                  return (
-                    <div key={i} className="bg-white p-6 rounded-3xl border border-blue-100 shadow-sm flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-2">{course.name}</h4>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-semibold text-xs">{course.platform}</span>
-                          <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {course.duration}</span>
-                        </div>
-                      </div>
-                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-bold text-sm w-full py-2 bg-indigo-50 rounded-xl text-center hover:bg-indigo-100 transition-colors inline-block mt-4">
-                        Click here to view course
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-gray-500 italic">No specific courses recommended at this time.</p>
-            )}
-          </div>
-
-          {/* Eligible Positions */}
-          {unifiedResults.eligiblePositions && unifiedResults.eligiblePositions.length > 0 && (
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                <Target className="h-6 w-6 text-purple-500" />
-                Top 10 Eligible Positions
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {unifiedResults.eligiblePositions.map((pos, i) => (
-                  <div key={i} className="bg-white p-6 rounded-3xl border border-purple-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-                    <div>
-                      <h4 className="font-bold text-lg text-gray-900 mb-3">{pos.position}</h4>
-                      <p className="text-xs font-bold text-gray-500 uppercase mb-2">Other Skills Required:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {pos.other_skills_required.map((skill, sIdx) => (
-                          <span key={sIdx} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium border border-purple-100">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+            <div className="bg-white rounded-[32px] p-10 border border-slate-100 shadow-sm">
+              <h4 className="text-xl font-black text-[#0f172a] mb-8 flex items-center gap-3">
+                <Lightbulb className="text-amber-500" /> Skill Gaps
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {unifiedResults.skillGaps.map((gap, i) => (
+                  <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <h5 className="font-black text-sm text-[#0f172a] mb-2">{gap.missing_skill}</h5>
+                    <div className="flex flex-wrap gap-1">
+                      {gap.topics_to_cover.slice(0, 3).map((t, idx) => (
+                        <span key={idx} className="text-[10px] font-bold text-slate-400 bg-white px-2 py-1 rounded-md">{t}</span>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
-
-          <div className="text-center pt-8">
-            <button
-              onClick={() => setUnifiedResults(null)}
-              className="text-gray-500 hover:text-gray-800 font-bold underline transition-colors"
-            >
-              Analyze Another Profile
-            </button>
           </div>
 
-        </motion.div>
+          {/* New Sections: Jobs and Courses */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="lg:col-span-7 bg-white rounded-[32px] p-10 border border-slate-100 shadow-sm">
+              <h4 className="text-xl font-black text-[#0f172a] mb-8 flex items-center gap-3">
+                <Briefcase className="text-[#0081C9]" /> Top 10 Eligible Positions
+              </h4>
+              <div className="space-y-4">
+                {(unifiedResults.eligiblePositions || []).map((pos, i) => (
+                  <div 
+                    key={i} 
+                    onClick={() => {
+                      const query = encodeURIComponent(`${pos.position} jobs`);
+                      window.open(`https://www.linkedin.com/jobs/search/?keywords=${query}`, '_blank');
+                    }}
+                    className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 cursor-pointer transition-all group"
+                  >
+                    <div>
+                      <h5 className="font-black text-[#0f172a] mb-1">{pos.position}</h5>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        Required: {pos.other_skills_required.slice(0, 3).join(', ')}
+                      </p>
+                    </div>
+                    <button className="p-3 bg-white text-slate-400 rounded-xl border border-slate-100 group-hover:bg-[#0081C9] group-hover:text-white group-hover:border-[#0081C9] transition-all">
+                      <ArrowRight size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 space-y-8">
+              <div className="bg-[#0F172A] rounded-[32px] p-10 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-x-4 translate-y-4"></div>
+                <h4 className="text-xl font-black mb-8 flex items-center gap-3 relative z-10">
+                  <GraduationCap className="text-blue-400" /> Learning Accelerators
+                </h4>
+                <div className="space-y-6 relative z-10">
+                  {unifiedResults.recommendedCourses.map((course, i) => (
+                    <div key={i} className="flex flex-col gap-2 p-5 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
+                      <div className="flex items-start justify-between">
+                        <h5 className="font-black text-sm text-blue-200">{course.name}</h5>
+                        <a 
+                          href={course.link || `https://www.coursera.org/search?query=${encodeURIComponent(course.name)}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500 hover:text-white transition-all"
+                        >
+                          <ExternalLink size={14} />
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{course.platform}</span>
+                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{course.duration}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+                <h4 className="text-sm font-black text-[#0f172a] mb-6 flex items-center gap-2">
+                  <Code className="text-[#0081C9]" size={16} /> Tech Stack Benchmark
+                </h4>
+                
+                <div className="h-[250px] w-full mb-6">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
+                      { subject: 'Architecture', A: 85, fullMark: 100 },
+                      { subject: 'DevOps', A: 70, fullMark: 100 },
+                      { subject: 'Frontend', A: 90, fullMark: 100 },
+                      { subject: 'Backend', A: 85, fullMark: 100 },
+                      { subject: 'Security', A: 65, fullMark: 100 },
+                      { subject: 'Testing', A: 80, fullMark: 100 },
+                    ]}>
+                      <PolarGrid stroke="#f1f5f9" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                      <Radar
+                        name="Skills"
+                        dataKey="A"
+                        stroke="#0081C9"
+                        fill="#0081C9"
+                        fillOpacity={0.15}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <span>Vector Alignment</span>
+                    <span className="text-blue-500">{(unifiedResults.mlPredictions.market_fit_score || 88)}% OPTIMIZED</span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${unifiedResults.mlPredictions.market_fit_score || 88}%` }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600" 
+                    />
+                  </div>
+                  <p className="text-[10px] font-medium text-slate-500 leading-relaxed">
+                    Your multi-dimensional toolset aligns with {unifiedResults.mlPredictions.market_fit_score || 88}% of industry standards for {unifiedResults.predictedRole}.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </PageShell>
   );
 };
+
+const MetricBox = ({ label, value, icon }: any) => (
+  <div className="bg-white rounded-[24px] p-8 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
+    <div className="mb-4">{icon}</div>
+    <h4 className="text-2xl font-black text-[#0f172a] mb-1">{value}</h4>
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+  </div>
+);
 
 export default CareerEngine;

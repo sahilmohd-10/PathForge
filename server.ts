@@ -1,4 +1,4 @@
-// MUST load dotenv FIRST, before any other imports
+
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
 
@@ -17,8 +17,8 @@ import chatRoutes from './src/server/routes/chat.ts';
 import dataRoutes from './src/server/routes/data.ts';
 import statsRoutes from './src/server/routes/stats.ts';
 import adminRoutes from './src/server/routes/admin.ts';
-import geminiRoutes from './src/server/routes/gemini.ts';
-import socialRoutes from './src/server/routes/social.ts';
+import notificationRoutes from './src/server/routes/notifications.ts';
+
 
 async function startServer() {
   try {
@@ -28,7 +28,7 @@ async function startServer() {
     console.log('Initializing database...');
     await initDb();
     console.log('Database initialized.');
-    
+
     const app = express();
     const server = http.createServer(app);
     const io = new Server(server, {
@@ -36,15 +36,15 @@ async function startServer() {
     });
 
     app.use(cors());
-    app.use(express.json({ limit: '50mb' })); // Increased limit for large imports
+    app.use(express.json({ limit: '50mb' }));
     app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-    // Serve uploaded media files
+
     app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
-    // Socket.io logic
+
     io.on('connection', (socket) => {
       console.log('User connected:', socket.id);
-      
+
       socket.on('join_room', (userId) => {
         socket.join(`user_${userId}`);
       });
@@ -58,19 +58,19 @@ async function startServer() {
       });
     });
 
-    // API Routes
+
     app.use('/api/auth', authRoutes);
     app.use('/api/profile', profileRoutes);
     app.use('/api/jobs', jobRoutes);
     app.use('/api/ai', aiRoutes);
-    app.use('/api/gemini', geminiRoutes);
     app.use('/api/chat', chatRoutes);
     app.use('/api/data', dataRoutes);
     app.use('/api/admin', adminRoutes);
+    app.use('/api/notifications', notificationRoutes);
     app.use('/api', statsRoutes);
-    app.use('/api/social', socialRoutes);
 
-    // Vite Integration
+
+
     if (!isProduction) {
       console.log('Starting Vite in middleware mode...');
       const vite = await createViteServer({

@@ -28,7 +28,7 @@ npm install
 ```
 
 ### Environment variables
-Create a `.env` file from `.env.example` and set your environment values.
+Create a `.env` file.
 
 Example `.env` values:
 ```env

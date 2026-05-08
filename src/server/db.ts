@@ -18,60 +18,67 @@ export async function initDb() {
     console.log('Reading schema.sql...');
     const schema = fs.readFileSync(path.join(process.cwd(), 'schema.sql'), 'utf8');
     const statements = schema.split(';').filter(s => s.trim());
-    
+
     console.log(`Executing ${statements.length} schema statements...`);
     for (const statement of statements) {
       await db.raw(statement);
     }
 
-    // Add verification columns if they don't exist (for existing databases)
+
     try {
       await db.raw(`ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0`);
       console.log('Added is_verified column');
     } catch (e) {
-      // Column already exists
+
     }
-    
+
     try {
       await db.raw(`ALTER TABLE users ADD COLUMN verification_code TEXT`);
       console.log('Added verification_code column');
     } catch (e) {
-      // Column already exists
+
     }
-    
+
     try {
       await db.raw(`ALTER TABLE users ADD COLUMN verification_expires_at DATETIME`);
       console.log('Added verification_expires_at column');
     } catch (e) {
-      // Column already exists
+
     }
 
-    // Add OAuth tracking columns if they don't exist
+
     try {
       await db.raw(`ALTER TABLE users ADD COLUMN is_oauth_user INTEGER DEFAULT 0`);
       console.log('Added is_oauth_user column');
     } catch (e) {
-      // Column already exists
+
     }
 
     try {
       await db.raw(`ALTER TABLE users ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`);
       console.log('Added updated_at column');
     } catch (e) {
-      // Column already exists
+
     }
 
     try {
       await db.raw(`ALTER TABLE profiles ADD COLUMN background_url TEXT`);
       console.log('Added background_url column to profiles');
     } catch (e) {
-      // Column already exists
+
     }
 
-    // Create gemini_insights table if it doesn't exist
+    try {
+      await db.raw(`ALTER TABLE profiles ADD COLUMN phone_number TEXT`);
+      console.log('Added phone_number column to profiles');
+    } catch (e) {
+
+    }
+
+
     try {
       await db.raw(`
-        CREATE TABLE IF NOT EXISTS gemini_insights (
+        CREATE TABLE IF NOT EXISTS ollama_insights (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
           insight_type TEXT CHECK(insight_type IN ('predictive', 'improvement_tips', 'career_paths', 'live_insights', 'skill_gap_analysis')) DEFAULT 'predictive',
@@ -81,22 +88,22 @@ export async function initDb() {
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
       `);
-      console.log('Created gemini_insights table');
+      console.log('Created ollama_insights table');
     } catch (e) {
-      console.log('gemini_insights table already exists');
+      console.log('ollama_insights table already exists');
     }
 
-    // Migrate gemini_insights table to remove UNIQUE constraint if needed
+
     try {
-      const tableInfo = await db.raw(`PRAGMA table_info(gemini_insights)`);
-      const hasUniqueConstraint = await db.raw(`SELECT sql FROM sqlite_master WHERE type='table' AND name='gemini_insights'`);
+      const tableInfo = await db.raw(`PRAGMA table_info(ollama_insights)`);
+      const hasUniqueConstraint = await db.raw(`SELECT sql FROM sqlite_master WHERE type='table' AND name='ollama_insights'`);
       const sql = (hasUniqueConstraint[0] as any)?.sql || '';
-      
+
       if (sql.includes('UNIQUE')) {
-        console.log('Removing UNIQUE constraint from gemini_insights...');
-        // SQLite doesn't support removing constraints, so we need to recreate the table
+        console.log('Removing UNIQUE constraint from ollama_insights...');
+
         await db.raw(`
-          CREATE TABLE gemini_insights_new (
+          CREATE TABLE ollama_insights_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             insight_type TEXT CHECK(insight_type IN ('predictive', 'improvement_tips', 'career_paths', 'live_insights', 'skill_gap_analysis')) DEFAULT 'predictive',
@@ -106,42 +113,42 @@ export async function initDb() {
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
           )
         `);
-        await db.raw(`INSERT INTO gemini_insights_new SELECT * FROM gemini_insights`);
-        await db.raw(`DROP TABLE gemini_insights`);
-        await db.raw(`ALTER TABLE gemini_insights_new RENAME TO gemini_insights`);
-        console.log('Successfully removed UNIQUE constraint from gemini_insights');
+        await db.raw(`INSERT INTO ollama_insights_new SELECT * FROM ollama_insights`);
+        await db.raw(`DROP TABLE ollama_insights`);
+        await db.raw(`ALTER TABLE ollama_insights_new RENAME TO ollama_insights`);
+        console.log('Successfully removed UNIQUE constraint from ollama_insights');
       }
     } catch (e: any) {
-      console.log('Migration check for gemini_insights:', (e as any).message);
-      // This is not critical, continue anyway
+      console.log('Migration check for ollama_insights:', (e as any).message);
+
     }
 
-    // Create index for gemini_insights
+
     try {
-      await db.raw(`CREATE INDEX IF NOT EXISTS idx_gemini_insights_user ON gemini_insights(user_id)`);
-      console.log('Created gemini_insights index');
+      await db.raw(`CREATE INDEX IF NOT EXISTS idx_ollama_insights_user ON ollama_insights(user_id)`);
+      console.log('Created ollama_insights index');
     } catch (e) {
-      // Index already exists
+
     }
 
-    // Add external_id and external_url columns to jobs table for Adzuna integration
+
     try {
       await db.raw(`ALTER TABLE jobs ADD COLUMN external_id TEXT`);
       console.log('Added external_id column to jobs table');
     } catch (e) {
-      // Column already exists
+
     }
 
     try {
       await db.raw(`ALTER TABLE jobs ADD COLUMN external_url TEXT`);
       console.log('Added external_url column to jobs table');
     } catch (e) {
-      // Column already exists
+
     }
 
-    // Seed default admin
-    const adminEmail = 'admin@gmail.com';
-    const adminPassword = 'admin12345';
+
+    const adminEmail = 'admin@pathforge.com';
+    const adminPassword = 'admin123';
     const adminExists = await db('users').where({ email: adminEmail }).first();
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     if (!adminExists) {
@@ -157,8 +164,8 @@ export async function initDb() {
       console.log('Updating default admin password...');
       await db('users').where({ email: adminEmail }).update({ password: hashedPassword, is_verified: 1 });
     }
-    
-    // Seed initial skills if empty
+
+
     console.log('Checking skills count...');
     const skillsCount = await db('skills').count('id as count').first();
     if (skillsCount && (skillsCount as any).count === 0) {

@@ -1,6 +1,6 @@
--- PathForge Database Schema (MySQL Compatible)
 
--- Users Table
+
+
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Profiles Table
+
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER UNIQUE NOT NULL,
@@ -30,73 +30,65 @@ CREATE TABLE IF NOT EXISTS profiles (
     job_readiness_score INTEGER DEFAULT 0,
     location TEXT,
     website TEXT,
+    phone_number TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Skills Table (Master list)
+
 CREATE TABLE IF NOT EXISTS skills (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE NOT NULL,
     category TEXT
 );
 
--- User Skills Table
+
 CREATE TABLE IF NOT EXISTS user_skills (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     skill_id INTEGER NOT NULL,
-    proficiency_level INTEGER DEFAULT 1, -- 1 to 5
+    proficiency_level INTEGER DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
     UNIQUE(user_id, skill_id)
 );
 
--- Jobs Table
+
 CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     company TEXT NOT NULL,
     description TEXT,
-    requirements TEXT, -- JSON string of required skills
+    requirements TEXT,
     location TEXT,
     salary_range TEXT,
     posted_by INTEGER,
-    type TEXT, -- Full-time, Part-time, etc.
+    type TEXT,
     status TEXT DEFAULT 'open',
-    external_id TEXT, -- Adzuna job ID
-    external_url TEXT, -- Direct link to Adzuna job
+    external_id TEXT,
+    external_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (posted_by) REFERENCES users(id)
 );
 
--- Applications Table
+
 CREATE TABLE IF NOT EXISTS applications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     status TEXT CHECK(status IN ('pending', 'reviewed', 'accepted', 'rejected', 'shortlisted', 'applied')) DEFAULT 'pending',
+    cover_letter TEXT,
     applied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Connections Table (Mentor/Peer Network)
-CREATE TABLE IF NOT EXISTS connections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    requester_id INTEGER NOT NULL,
-    receiver_id INTEGER NOT NULL,
-    status TEXT CHECK(status IN ('pending', 'accepted', 'blocked')) DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (requester_id) REFERENCES users(id),
-    FOREIGN KEY (receiver_id) REFERENCES users(id),
-    UNIQUE(requester_id, receiver_id)
-);
 
--- Messages Table (Real-time Chat)
 CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sender_id INTEGER NOT NULL,
     receiver_id INTEGER NOT NULL,
+    context_type TEXT CHECK(context_type IN ('application', 'mentorship', 'general')) DEFAULT 'general',
+    context_id INTEGER,
     content TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -104,7 +96,44 @@ CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (receiver_id) REFERENCES users(id)
 );
 
--- Resume Data Table
+
+CREATE TABLE IF NOT EXISTS mock_interviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    job_id INTEGER,
+    job_role TEXT NOT NULL,
+    transcript TEXT,
+    feedback_score INTEGER,
+    feedback_details TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE SET NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS learning_roadmaps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    target_role TEXT NOT NULL,
+    roadmap_json TEXT NOT NULL,
+    status TEXT DEFAULT 'in_progress',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS portfolio_evaluations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL,
+    github_url TEXT,
+    portfolio_url TEXT,
+    score INTEGER,
+    feedback TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
 CREATE TABLE IF NOT EXISTS resume_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER UNIQUE NOT NULL,
@@ -116,7 +145,7 @@ CREATE TABLE IF NOT EXISTS resume_data (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Career Scores Table
+
 CREATE TABLE IF NOT EXISTS career_scores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -132,7 +161,7 @@ CREATE TABLE IF NOT EXISTS career_scores (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Gemini Insights Table
+
 CREATE TABLE IF NOT EXISTS gemini_insights (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -143,8 +172,34 @@ CREATE TABLE IF NOT EXISTS gemini_insights (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Indexes for performance
+
+CREATE TABLE IF NOT EXISTS connections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    requester_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    status TEXT CHECK(status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(requester_id, receiver_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT DEFAULT 'info',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
 CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_job_title ON jobs(title);
 CREATE INDEX IF NOT EXISTS idx_msg_sender_receiver ON messages(sender_id, receiver_id);
 CREATE INDEX IF NOT EXISTS idx_gemini_insights_user ON gemini_insights(user_id);
+CREATE INDEX IF NOT EXISTS idx_connections_users ON connections(requester_id, receiver_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);

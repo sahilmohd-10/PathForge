@@ -4,15 +4,7 @@ import { fetchAdzunaJobs, searchAdzunaJobs, ProcessedJob } from '../adzunaServic
 
 const router = express.Router();
 
-/**
- * GET / - Fetch jobs from database or Adzuna
- * Query params:
- * - source: 'db' (database) or 'adzuna' (default: 'db')
- * - country: Adzuna country code (default: 'us')
- * - page: Page number (default: 1)
- * - limit: Results per page (default: 50, max: 50)
- * - category: Job category for Adzuna (optional)
- */
+
 router.get('/', async (req, res) => {
   try {
     const source = (req.query.source as string) || 'db';
@@ -22,21 +14,19 @@ router.get('/', async (req, res) => {
     const category = (req.query.category as string) || undefined;
 
     if (source === 'adzuna') {
-      // Fetch from Adzuna API
-      const jobs = await fetchAdzunaJobs(country, category, page, limit);
+      const adzunaData = await fetchAdzunaJobs(country, category, page, limit);
       return res.json({
         source: 'adzuna',
         page,
         limit,
         country,
-        total: jobs.length,
-        jobs
+        total: adzunaData.count,
+        jobs: adzunaData.results
       });
     } else if (source === 'all') {
-      // Fetch from both and merge
-      const adzunaJobs = await fetchAdzunaJobs(country, category, page, limit).catch(() => []);
-      const dbJobs = await db('jobs').whereNotNull('posted_by').select('*').orderBy('created_at', 'desc').limit(limit).offset((page - 1) * limit);
-      
+      const adzunaData = await fetchAdzunaJobs(country, category, page, limit).catch(() => ({ results: [], count: 0 }));
+      const dbJobs = await db('jobs').select('*').orderBy('created_at', 'desc').limit(limit).offset((page - 1) * limit);
+
       const formattedDbJobs = dbJobs.map(job => ({
         id: job.id.toString(),
         title: job.title,
@@ -48,7 +38,7 @@ router.get('/', async (req, res) => {
         created_at: job.created_at,
         is_local: true,
         posted_by: job.posted_by,
-        external_url: null
+        external_url: job.external_url || null
       }));
 
       return res.json({
@@ -56,23 +46,19 @@ router.get('/', async (req, res) => {
         page,
         limit,
         country,
-        total: adzunaJobs.length + dbJobs.length,
-        jobs: [...formattedDbJobs, ...adzunaJobs]
+        total: adzunaData.count + dbJobs.length,
+        jobs: [...formattedDbJobs, ...adzunaData.results]
       });
     } else {
-      // Fetch from database
-      let query = db('jobs').whereNotNull('posted_by');
-      
-      // If no recruiter-posted jobs exist, this will be empty
-      const jobs = await query.select('*').orderBy('created_at', 'desc').limit(limit).offset((page - 1) * limit);
-      const total = await db('jobs').whereNotNull('posted_by').count('* as count').first();
-      
+      const jobs = await db('jobs').select('*').orderBy('created_at', 'desc').limit(limit).offset((page - 1) * limit);
+      const total = await db('jobs').count('* as count').first();
+
       res.json({
         source: 'db',
         page,
         limit,
         total: total?.count || 0,
-        jobs
+        jobs: jobs.map(j => ({ ...j, is_local: true }))
       });
     }
   } catch (error: any) {
@@ -81,17 +67,17 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { title, company, description, requirements, location, salaryRange, type, postedBy } = req.body;
+  const { title, company, description, requirements, location, salary_range, salaryRange, type, posted_by, postedBy } = req.body;
   try {
     const [id] = await db('jobs').insert({
       title,
       company,
       description,
-      requirements: JSON.stringify(requirements),
+      requirements: typeof requirements === 'string' ? requirements : JSON.stringify(requirements),
       location,
-      salary_range: salaryRange,
+      salary_range: salary_range || salaryRange,
       type,
-      posted_by: postedBy,
+      posted_by: posted_by || postedBy,
       status: 'open'
     });
     res.status(201).json({ id, message: 'Job posted successfully' });
@@ -100,14 +86,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-/**
- * GET /search - Search jobs from Adzuna
- * Query params:
- * - keywords: Search keywords (required)
- * - country: Country code (default: 'us')
- * - page: Page number (default: 1)
- * - limit: Results per page (default: 50, max: 50)
- */
+
 router.get('/search', async (req, res) => {
   try {
     const keywords = req.query.keywords as string;
@@ -119,16 +98,15 @@ router.get('/search', async (req, res) => {
       return res.status(400).json({ error: 'Keywords parameter is required' });
     }
 
-    let adzunaJobs: ProcessedJob[] = [];
+    let adzunaData = { results: [], count: 0 };
     try {
-      adzunaJobs = await searchAdzunaJobs(country, keywords, page, limit);
+      adzunaData = await searchAdzunaJobs(country, keywords, page, limit);
     } catch (e) {
       console.error('Adzuna search failed, continuing with local jobs', e);
     }
 
-    // Search local database
+
     const dbJobs = await db('jobs')
-      .whereNotNull('posted_by')
       .where(function() {
         this.where('title', 'like', `%${keywords}%`)
             .orWhere('company', 'like', `%${keywords}%`)
@@ -157,20 +135,15 @@ router.get('/search', async (req, res) => {
       country,
       page,
       limit,
-      total: adzunaJobs.length + dbJobs.length,
-      jobs: [...formattedDbJobs, ...adzunaJobs]
+      total: adzunaData.count + dbJobs.length,
+      jobs: [...formattedDbJobs, ...adzunaData.results]
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-/**
- * POST /sync-to-db - Sync Adzuna jobs to database
- * Body params:
- * - jobs: Array of Adzuna jobs to save
- * - country: Country code (default: 'us')
- */
+
 router.post('/sync-to-db', async (req, res) => {
   try {
     const { jobs } = req.body;
@@ -179,7 +152,7 @@ router.post('/sync-to-db', async (req, res) => {
       return res.status(400).json({ error: 'Jobs array is required and must not be empty' });
     }
 
-    // Format jobs for database insertion (system jobs with posted_by = null or 0)
+
     const formattedJobs = jobs.map((job: ProcessedJob) => ({
       title: job.title,
       company: job.company,
@@ -188,7 +161,7 @@ router.post('/sync-to-db', async (req, res) => {
       location: job.location,
       salary_range: job.salary_range,
       type: job.type,
-      posted_by: null, // System jobs from Adzuna
+      posted_by: null,
       status: 'open',
       external_id: job.external_id,
       external_url: job.external_url
@@ -242,11 +215,11 @@ router.post('/applications/:id/shortlist', async (req, res) => {
 
     await db('applications').where({ id: req.params.id }).update({ status: 'shortlisted' });
 
-    // Notify student via messages
+
     const job = await db('jobs').where({ id: application.job_id }).first();
     const user = await db('users').where({ id: application.user_id }).first();
     const defaultMessage = `Congratulations! You have been shortlisted for the ${job.title} position at ${job.company}.`;
-    
+
     await db('messages').insert({
       sender_id: job.posted_by,
       receiver_id: application.user_id,
@@ -254,7 +227,7 @@ router.post('/applications/:id/shortlist', async (req, res) => {
       is_read: false
     });
 
-    // Add a confirmation notification for the recruiter so the selection is visible in their notification panel.
+
     await db('messages').insert({
       sender_id: job.posted_by,
       receiver_id: job.posted_by,
@@ -276,12 +249,12 @@ router.delete('/:id', async (req, res) => {
     if (job.posted_by !== userId) {
       return res.status(403).json({ error: 'Unauthorized to delete this job' });
     }
-    
-    // Applications linked to this job should intuitively disappear, 
-    // cascading delete or deleting manually if cascade isn't strictly set
+
+
+
     await db('applications').where({ job_id: req.params.id }).del();
     await db('jobs').where({ id: req.params.id }).del();
-    
+
     res.json({ message: 'Job deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -297,7 +270,8 @@ router.get('/applications/student/:userId', async (req, res) => {
         'applications.*',
         'jobs.title as job_title',
         'jobs.company as company_name',
-        'jobs.location as job_location'
+        'jobs.location as job_location',
+        'jobs.external_url'
       )
       .orderBy('applied_at', 'desc');
     res.json(applications);
@@ -314,10 +288,19 @@ router.post('/:jobId/apply', async (req, res) => {
       return res.status(400).json({ error: 'You have already applied to this job.' });
     }
 
-    const job = await db('jobs').where({ id: req.params.jobId }).first();
+    let job = await db('jobs').where({ id: req.params.jobId }).first();
+    
+    // Fallback to check external_id if local id doesn't match
+    if (!job) {
+      job = await db('jobs').where({ external_id: req.params.jobId }).first();
+    }
+
     if (!job) {
       return res.status(404).json({ error: 'Job not found.' });
     }
+
+    // Use the actual internal database ID for the application record
+    const internalJobId = job.id;
 
     const user = await db('users').where({ id: userId }).first();
     if (!user) {
@@ -325,7 +308,7 @@ router.post('/:jobId/apply', async (req, res) => {
     }
 
     await db('applications').insert({
-      job_id: req.params.jobId,
+      job_id: internalJobId,
       user_id: userId,
       status: 'applied'
     });

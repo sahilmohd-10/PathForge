@@ -15,7 +15,7 @@ export default defineConfig(({mode}) => {
     server: {
       host: '0.0.0.0',
       port: 3000,
-      // HMR can be disabled by setting DISABLE_HMR=true.
+
       hmr: process.env.DISABLE_HMR !== 'true',
     },
   };

@@ -28,11 +28,11 @@ def main() -> None:
         model = joblib.load(model_path)
         if not isinstance(model, CareerModel):
             print(f'Warning: Loaded model is {type(model)}, not CareerModel. Recreating model...', file=sys.stderr)
-            # Try to use the model anyway, or create a default response
+
             raise TypeError('Model type mismatch')
     except (TypeError, Exception) as e:
         print(f'Error loading model: {e}. Using default prediction.', file=sys.stderr)
-        # Return a default/fallback prediction
+
         result = {
             'predicted_role': 'Software Developer',
             'predicted_salary_range': '60,000 - 100,000',
