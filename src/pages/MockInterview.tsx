@@ -190,11 +190,18 @@ const MockInterview = () => {
     }
   };
 
+  const silenceTimeoutRef = useRef<any>(null);
+  const currentInputRef = useRef<string>('');
+
+  // Keep ref in sync with input state for the timeout callback
+  useEffect(() => {
+    currentInputRef.current = input;
+  }, [input]);
+
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
     
-    // Stop any existing recognition
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
@@ -207,21 +214,28 @@ const MockInterview = () => {
     recognition.onstart = () => setIsListening(true);
     
     recognition.onresult = (event: any) => {
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
+      // Clear silence timeout on any speech activity
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
       }
-      
-      // Update input with current final results plus any interim results
-      const currentInterim = Array.from(event.results)
-        .slice(event.resultIndex)
-        .map((res: any) => res[0].transcript)
-        .join('');
+
+      let currentInterim = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        currentInterim += event.results[i][0].transcript;
+      }
         
       if (currentInterim) {
         setInput(currentInterim);
+        
+        // Start 4-second silence timer
+        silenceTimeoutRef.current = setTimeout(() => {
+          if (currentInputRef.current.trim() && !isGenerating) {
+            console.log('Silence detected, auto-sending message...');
+            sendMessage(currentInputRef.current);
+            // Stop listening temporarily to avoid feedback during AI generation
+            recognition.stop();
+          }
+        }, 4000);
       }
     };
     
@@ -233,6 +247,9 @@ const MockInterview = () => {
     recognition.onend = () => {
       setIsListening(false);
       recognitionRef.current = null;
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
     };
 
     recognitionRef.current = recognition;
