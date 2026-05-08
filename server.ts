@@ -86,8 +86,8 @@ async function startServer() {
       });
     }
 
-    server.listen(PORT, '127.0.0.1', () => {
-      console.log(`PathForge running at http://localhost:${PORT}`);
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`PathForge running at http://0.0.0.0:${PORT}`);
     });
   } catch (error) {
     console.error('FAILED TO START SERVER:', error);
