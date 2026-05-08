@@ -393,6 +393,7 @@ Return ONLY a valid JSON object matching this exact structure:
     {
       "step": 1,
       "focus": "Deep-dive focus area",
+      "estimated_time": "2 weeks",
       "description": "Exhaustive technical details, specific sub-topics, and industry standards to master in this step.",
       "mini_project": "A high-complexity, portfolio-worthy project to validate these skills",
       "resources": [

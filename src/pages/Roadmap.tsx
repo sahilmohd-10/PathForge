@@ -31,6 +31,8 @@ const Roadmap = () => {
     }
   };
 
+  const [selectedStep, setSelectedStep] = useState<any>(null);
+
   return (
     <PageShell title="Learning Roadmap" subtitle="AI-synthesized learning paths designed to bridge your technical skill gaps">
       <div className="max-w-6xl mx-auto space-y-12">
@@ -54,7 +56,7 @@ const Roadmap = () => {
           </div>
         </div>
 
-        {/* Results Section (Image 3) */}
+        {/* Results Section */}
         <AnimatePresence>
           {roadmap && (
             <div className="space-y-8">
@@ -95,11 +97,12 @@ const Roadmap = () => {
                       </h4>
                       <div className="flex items-center gap-2 text-slate-400 mb-6">
                         <Calendar size={14} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">ESTIMATED TIME: {milestone.duration || '2 WEEKS'}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">ESTIMATED TIME: {milestone.estimated_time || milestone.duration || '2 WEEKS'}</span>
                       </div>
-                      <p className="text-sm text-slate-500 font-bold leading-relaxed mb-8">
+                      <p className="text-sm text-slate-500 font-bold leading-relaxed mb-4 line-clamp-3">
                         {milestone.description}
                       </p>
+                      <button onClick={() => setSelectedStep(milestone)} className="text-[#0081C9] text-[10px] font-black uppercase tracking-widest mb-8 hover:underline">Read Full Deep-Dive</button>
                     </div>
                     <button 
                       onClick={() => {
@@ -107,18 +110,82 @@ const Roadmap = () => {
                         if (resource?.url) {
                           window.open(resource.url, '_blank');
                         } else {
-                          const query = encodeURIComponent(`${milestone.focus || milestone.title} tutorials`);
+                          const query = encodeURIComponent(`${milestone.focus || milestone.title} study guide`);
                           window.open(`https://www.google.com/search?q=${query}`, '_blank');
                         }
                       }}
                       className="w-full py-4 bg-slate-50 text-[#0081C9] font-black rounded-2xl border border-slate-100 hover:bg-[#EBF7FF] transition-all flex items-center justify-center gap-2"
                     >
-                      Continue Learning
-                      <ChevronRight size={18} />
+                      Study This Step
+                      <ExternalLink size={18} />
                     </button>
                   </motion.div>
                 ))}
               </div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal for Details */}
+        <AnimatePresence>
+          {selectedStep && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 sm:p-12">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedStep(null)}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-full"
+              >
+                <div className="p-10 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-8">
+                    <span className="px-4 py-2 bg-blue-50 text-[#0081C9] text-[10px] font-black uppercase tracking-widest rounded-full">Technical Deep-Dive</span>
+                    <button onClick={() => setSelectedStep(null)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all">✕</button>
+                  </div>
+                  <h3 className="text-3xl font-black text-[#0f172a] mb-4">{selectedStep.focus || selectedStep.title}</h3>
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl text-slate-400">
+                      <Clock size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">{selectedStep.estimated_time || '2 Weeks'}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-8">
+                    <div>
+                      <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">CONCEPTS & ARCHITECTURE</h5>
+                      <p className="text-slate-600 font-bold leading-loose">{selectedStep.description}</p>
+                    </div>
+                    
+                    {selectedStep.mini_project && (
+                      <div className="p-8 bg-[#F8FAFC] rounded-3xl border border-slate-100">
+                        <h5 className="text-[10px] font-black text-[#0081C9] uppercase tracking-widest mb-3">PRACTICAL VALIDATION (MINI PROJECT)</h5>
+                        <p className="text-slate-700 font-black text-sm leading-relaxed">{selectedStep.mini_project}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">RECOMMENDED STUDY RESOURCES</h5>
+                      <div className="space-y-3">
+                        {(selectedStep.resources || []).map((res: any, i: number) => (
+                          <a key={i} href={res.url} target="_blank" rel="noreferrer" className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl hover:border-[#0081C9] transition-all group">
+                            <span className="font-bold text-slate-600 group-hover:text-[#0081C9]">{res.name}</span>
+                            <ExternalLink size={16} className="text-slate-300 group-hover:text-[#0081C9]" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
+                  <button onClick={() => setSelectedStep(null)} className="px-8 py-4 bg-[#0F172A] text-white font-black rounded-2xl hover:bg-black transition-all">Close Details</button>
+                </div>
+              </motion.div>
             </div>
           )}
         </AnimatePresence>
