@@ -108,7 +108,7 @@ const StudentDashboard = ({ profile }: any) => {
                         {new Date(app.applied_at || app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
-                    {app.status !== 'rejected' && (
+                    {app.status === 'shortlisted' && (
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
