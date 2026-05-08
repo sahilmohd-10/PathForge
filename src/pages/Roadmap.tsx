@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import PageShell from '../components/PageShell';
-import { Map, Loader2, Play, CheckCircle, Target, Sparkles, ChevronRight, BookOpen, Clock, Rocket, Route, Calendar } from 'lucide-react';
+import { Map, Loader2, Play, CheckCircle, Target, Sparkles, ChevronRight, BookOpen, Clock, Rocket, Route, Calendar, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TwilioShare from '../components/TwilioShare';
 
