@@ -493,51 +493,49 @@ Return ONLY a valid JSON object:
   },
 
   async evaluatePortfolio(githubUrl: string, portfolioUrl: string, profileData: any, githubData?: any): Promise<any> {
-    const prompt = `You are an elite Technical Hiring Manager and a CTO with 20+ years of experience in high-growth tech companies. You are conducting a high-stakes audit of a candidate's digital engineering footprint.
+    const prompt = `You are a Principal Engineering Lead at a Tier-1 Tech Company. Conduct a high-stakes "Proof-of-Work" audit of this candidate's digital engineering footprint.
+
+STRICT AUDIT RUBRIC (Calculate score 0-100 based on this):
+1. TECHNICAL BREADTH (30%): Variety of technologies used and complexity of solved problems.
+2. IMPLEMENTATION QUALITY (30%): Evidence of clean code, README hygiene, and documentation in repositories.
+3. IMPACT & SCALE (20%): Project significance, stars, forks, or real-world utility.
+4. CONSISTENCY (20%): Frequency of contributions and project completion rate.
 
 CONTEXT:
-- Candidate Name: ${profileData?.personalInfo?.fullName || 'Candidate'}
+- Candidate: ${profileData?.personalInfo?.fullName || 'Candidate'}
 - Declared Skills: ${profileData?.skills ? profileData.skills.join(', ') : 'Unknown'}
-- GitHub URL: ${githubUrl || 'Not provided'}
-- Portfolio URL: ${portfolioUrl || 'Not provided'}
+- GitHub Evidence: ${githubData ? JSON.stringify(githubData, null, 2) : 'No direct data fetched.'}
 
-${githubData ? `INTERNAL SYSTEM REPOSITORY AUDIT (Deeply Parsed):
-${JSON.stringify(githubData, null, 2)}` : 'NOTE: No direct GitHub data could be fetched. Evaluate based on the URL presence and stated skills.'}
+Your task:
+- Be a "hard grader". Distinguish between tutorial projects and original engineering.
+- Identify the "Real World Value" of their top repositories.
+- Provide a score that accurately reflects their recruitability at a top firm.
 
-YOUR TASK:
-1. TECHNICAL AUDIT: Analyze the projects for technical complexity, stack relevance, and 'Proof of Work'. Distinguish between tutorial-based code and original engineering.
-2. GAP ANALYSIS: Compare their declared skills against their actual repositories. Is there evidence they can actually use the tools they claim? Find the "Skill vs. Code" discrepancy.
-3. RECRUITABILITY SCORE: Assign a score (0-100) based on how quickly a Tier-1 tech company (like Google, Stripe, or OpenAI) would hire them based on this public evidence.
-4. ACTIONABLE ROADMAP: Provide brutal but constructive feedback. Suggest high-impact projects that would solve their specific "Proof of Work" gaps.
-
-OUTPUT REQUIREMENTS:
-- Return ONLY a valid JSON object.
-- Use professional, punchy, and highly technical language.
-
+Return ONLY a valid JSON object:
 {
-  "score": 85,
-  "feedback": "A high-level executive summary of their engineering presence (3-4 sentences).",
-  "technical_depth_analysis": "Specific analysis of their code complexity, architectural choices, and repository hygiene based on the parsed data.",
+  "score": <Calculated Integer 0-100>,
+  "feedback": "A concise executive summary (3-4 sentences).",
+  "technical_depth_analysis": "Detailed analysis of their architectural patterns and code complexity.",
   "projects": [
     {
       "name": "Project Name",
-      "overview": "A brief overview of what the project does and its engineering significance.",
-      "tools_used": ["React", "TypeScript", "TailwindCSS"],
-      "impact": "The technical complexity or user impact of this specific repo."
+      "overview": "Brief technical overview.",
+      "tools_used": ["React", "TypeScript"],
+      "impact": "Technical complexity or real-world impact."
     }
   ],
-  "proof_of_work_status": "Briefly state if their GitHub proves their skills or if it looks like 'Tutorial Hell'.",
-  "strengths": ["Identify 3 specific, evidence-based engineering strengths"],
-  "weaknesses": ["Identify 3 critical gaps in their public presence or technical evidence"],
+  "proof_of_work_status": "Status (e.g. Verified Engineer / Tutorial Hell / Rising Talent)",
+  "strengths": ["Evidence-based strength 1", "Evidence-based strength 2"],
+  "weaknesses": ["Evidence-based gap 1", "Evidence-based gap 2"],
   "project_ideas": [
     {
-      "title": "Project Title",
-      "description": "A high-complexity project idea that directly addresses a skill gap found in their audit.",
+      "title": "Advanced Project Idea",
+      "description": "A project that would directly address a found gap.",
       "stack": "Recommended technologies",
       "difficulty": "Intermediate/Advanced"
     }
   ],
-  "portfolio_tips": ["3 specific tips to improve their READMEs, commit history, or portfolio site"]
+  "portfolio_tips": ["3 specific tips to improve their engineering presence"]
 }`;
     const text = await callLLM(prompt, "json");
     const jsonMatch = text.match(/\{[\s\S]*\}/);
