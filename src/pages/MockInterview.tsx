@@ -7,19 +7,42 @@ import { FaceMesh } from '@mediapipe/face_mesh';
 import { motion, AnimatePresence } from 'framer-motion';
 import TwilioShare from '../components/TwilioShare';
 
-import { useSearchParams } from 'react-router-dom';
-
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
+const useHashParams = () => {
+  const [params, setParams] = useState(new URLSearchParams());
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+      setParams(new URLSearchParams(queryString));
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  return params;
+};
+
 const MockInterview = () => {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const searchParams = useHashParams();
   const initialJobId = searchParams.get('jobId');
   const [jobId, setJobId] = useState<string | null>(initialJobId);
   const [jobRole, setJobRole] = useState(searchParams.get('role') || '');
+
+  useEffect(() => {
+    const role = searchParams.get('role');
+    const jId = searchParams.get('jobId');
+    if (role) setJobRole(role);
+    if (jId) setJobId(jId);
+  }, [searchParams]);
+  
   const [isStarted, setIsStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
