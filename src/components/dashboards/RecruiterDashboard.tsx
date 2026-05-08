@@ -125,10 +125,10 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard title="Active Requisitions" value={stats?.activeJobs || 0} icon={<Briefcase size={20} />} trend="+2 this week" color="indigo" />
-        <MetricCard title="Total Candidates" value={stats?.totalApps || 0} icon={<Users size={20} />} trend="+15% MoM" color="amber" />
-        <MetricCard title="Shortlisted Talent" value={stats?.shortlisted || 0} icon={<Target size={20} />} trend="High Efficiency" color="emerald" />
-        <MetricCard title="Awaiting Audit" value={stats?.pending || 0} icon={<Clock size={20} />} trend="Review Required" color="rose" />
+        <MetricCard title="Active Requisitions" value={stats?.activeJobs || 0} icon={<Briefcase size={20} />} trend={stats?.activeJobs > 0 ? "Active" : "None"} color="indigo" />
+        <MetricCard title="Total Candidates" value={stats?.totalApps || 0} icon={<Users size={20} />} trend={stats?.totalApps > 0 ? "Growing" : "No data"} color="amber" />
+        <MetricCard title="Shortlisted Talent" value={stats?.shortlisted || 0} icon={<Target size={20} />} trend={stats?.shortlisted > 0 ? "Shortlisted" : "None"} color="emerald" />
+        <MetricCard title="Awaiting Audit" value={stats?.pending || 0} icon={<Clock size={20} />} trend={stats?.pending > 0 ? "Pending" : "All clear"} color="rose" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -242,12 +242,12 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
               <h4 className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.3em] mb-6">Hiring Efficiency</h4>
               <div className="flex items-end justify-between gap-4">
                  <div>
-                    <h5 className="text-4xl font-black leading-none">14.2</h5>
+                    <h5 className="text-4xl font-black leading-none">{stats?.avgDaysToHire || 0}</h5>
                     <p className="text-[10px] font-bold text-indigo-200 mt-2">Avg. Days to Hire</p>
                  </div>
                  <div className="h-20 w-32">
                     <ResponsiveContainer width="100%" height="100%">
-                       <LineChart data={[ {v:10}, {v:15}, {v:12}, {v:18}, {v:14} ]}>
+                       <LineChart data={stats?.hiringTrend || [ {v:0}, {v:0}, {v:0}, {v:0}, {v:0} ]}>
                           <Line type="monotone" dataKey="v" stroke="white" strokeWidth={3} dot={false} />
                        </LineChart>
                     </ResponsiveContainer>
@@ -260,7 +260,7 @@ const RecruiterDashboard = ({ stats: initialStats }: any) => {
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Pipeline Composition</h4>
               <div className="h-[200px] w-full">
                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[ {n:'Eng', v:45}, {n:'Des', v:25}, {n:'Prod', v:20}, {n:'Mark', v:10} ]}>
+                    <BarChart data={stats?.composition || [ {n:'Eng', v:0}, {n:'Des', v:0}, {n:'Prod', v:0}, {n:'Mark', v:0} ]}>
                        <Bar dataKey="v" radius={[6, 6, 0, 0]}>
                           {[0,1,2,3].map((entry, index) => (
                              <Cell key={`cell-${index}`} fill={['#4f46e5', '#06b6d4', '#8b5cf6', '#10b981'][index]} />

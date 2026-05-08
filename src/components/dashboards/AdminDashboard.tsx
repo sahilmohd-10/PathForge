@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 
 const AdminDashboard = ({ stats }: any) => {
   const userDist = [
-    { name: 'Students', value: stats?.students || 120, color: '#6366f1' },
-    { name: 'Recruiters', value: stats?.recruiters || 45, color: '#f59e0b' },
-    { name: 'Admins', value: stats?.admins || 5, color: '#10b981' },
+    { name: 'Students', value: stats?.students || 0, color: '#6366f1' },
+    { name: 'Recruiters', value: stats?.recruiters || 0, color: '#f59e0b' },
+    { name: 'Admins', value: stats?.admins || 0, color: '#10b981' },
   ];
 
   return (
@@ -75,9 +75,9 @@ const AdminDashboard = ({ stats }: any) => {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats?.platformActivity || [
-                { name: '01', users: 40 }, { name: '02', users: 30 }, { name: '03', users: 65 },
-                { name: '04', users: 45 }, { name: '05', users: 90 }, { name: '06', users: 55 },
-                { name: '07', users: 70 },
+                { name: 'Mon', users: 0 }, { name: 'Tue', users: 0 }, { name: 'Wed', users: 0 },
+                { name: 'Thu', users: 0 }, { name: 'Fri', users: 0 }, { name: 'Sat', users: 0 },
+                { name: 'Sun', users: 0 },
               ]}>
                 <defs>
                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">

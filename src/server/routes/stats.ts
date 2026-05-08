@@ -274,69 +274,8 @@ router.get('/admin/data-match', isAdmin, async (req, res) => {
       salary_max: match.salary_max || 120000
     }));
 
-    if (!enrichedMatches || enrichedMatches.length === 0) {
-      enrichedMatches = [
-        {
-          id: 0,
-          full_name: 'Sample Student',
-          email: 'student.sample@example.com',
-          career_path: 'Software Engineer',
-          confidence_score: 82,
-          market_fit_score: 85,
-          growth_potential: 78,
-          churn_risk: 17,
-          salary_min: 85000,
-          salary_max: 110000
-        },
-        {
-          id: 1,
-          full_name: 'Demo Analyst',
-          email: 'demo.analyst@example.com',
-          career_path: 'Data Analyst',
-          confidence_score: 76,
-          market_fit_score: 72,
-          growth_potential: 80,
-          churn_risk: 22,
-          salary_min: 70000,
-          salary_max: 90000
-        },
-        {
-          id: 2,
-          full_name: 'Test Designer',
-          email: 'test.designer@example.com',
-          career_path: 'UI/UX Designer',
-          confidence_score: 69,
-          market_fit_score: 68,
-          growth_potential: 74,
-          churn_risk: 20,
-          salary_min: 65000,
-          salary_max: 88000
-        },
-        {
-          id: 3,
-          full_name: 'Sample Manager',
-          email: 'manager.sample@example.com',
-          career_path: 'Product Manager',
-          confidence_score: 78,
-          market_fit_score: 80,
-          growth_potential: 85,
-          churn_risk: 15,
-          salary_min: 90000,
-          salary_max: 130000
-        },
-        {
-          id: 4,
-          full_name: 'ML Engineer Test',
-          email: 'mleng.test@example.com',
-          career_path: 'ML Engineer',
-          confidence_score: 84,
-          market_fit_score: 82,
-          growth_potential: 88,
-          churn_risk: 12,
-          salary_min: 100000,
-          salary_max: 150000
-        }
-      ];
+    if (!enrichedMatches) {
+      enrichedMatches = [];
     }
 
     res.json(enrichedMatches);

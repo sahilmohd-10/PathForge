@@ -26,9 +26,9 @@ const StudentDashboard = ({ profile }: any) => {
   }, [user]);
 
   const stats = [
-    { label: 'Skills Tracked', value: '39', icon: <Zap size={24} />, color: 'bg-white' },
-    { label: 'Applications', value: applications.length || '7', icon: <CheckCircle size={24} />, color: 'bg-white' },
-    { label: 'Time Learned', value: '8 min', icon: <Clock size={24} />, color: 'bg-white' },
+    { label: 'Skills Tracked', value: profile?.skills?.length || '0', icon: <Zap size={24} />, color: 'bg-white' },
+    { label: 'Applications', value: applications.length.toString(), icon: <CheckCircle size={24} />, color: 'bg-white' },
+    { label: 'Time Learned', value: '0 min', icon: <Clock size={24} />, color: 'bg-white' },
   ];
 
   const tools = [
@@ -42,7 +42,7 @@ const StudentDashboard = ({ profile }: any) => {
     <div className="space-y-10">
       <div>
         <h2 className="text-3xl font-black text-[#0f172a] mb-2">Student Dashboard</h2>
-        <p className="text-slate-500 font-bold">Your {profile?.target_career || 'Data Analyst/Scientist'} readiness at a glance.</p>
+        <p className="text-slate-500 font-bold">Your {profile?.target_career || 'Target Role'} readiness at a glance.</p>
       </div>
 
       {/* Stats Grid */}
@@ -71,57 +71,69 @@ const StudentDashboard = ({ profile }: any) => {
                 <h3 className="text-lg font-black text-[#0f172a]">My Applications</h3>
               </div>
               <div className="text-center">
-                <p className="text-lg font-black text-[#0081C9]">{applications.length || 7}</p>
+                <p className="text-lg font-black text-[#0081C9]">{applications.length}</p>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">total</p>
               </div>
             </div>
             <div className="p-4 space-y-3">
-              {(applications.length > 0 ? applications : [
-                { id: 1, job_title: 'Data Analyst', company: 'Vrinda Global', location: 'Noida, Ghaziabad', status: 'Applied', created_at: '2026-05-03' },
-                { id: 2, job_title: 'Data Analyst', company: 'Tech Solutions', location: 'Remote', status: 'Applied', created_at: '2026-05-01' }
-              ]).map((app) => (
-                <div 
-                  key={app.id} 
-                  onClick={() => {
-                    if (app.external_url) window.open(app.external_url, '_blank');
-                    else window.location.hash = `jobboard?search=${encodeURIComponent(app.job_title)}`;
-                  }}
-                  className="p-5 bg-slate-50 rounded-[24px] flex items-center justify-between border border-transparent hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#0081C9] shadow-sm group-hover:scale-110 transition-transform">
-                      <Briefcase size={20} />
+              {applications.length > 0 ? (
+                applications.map((app) => (
+                  <div 
+                    key={app.id} 
+                    onClick={() => {
+                      if (app.external_url) window.open(app.external_url, '_blank');
+                      else window.location.hash = `jobboard?search=${encodeURIComponent(app.job_title)}`;
+                    }}
+                    className="p-5 bg-slate-50 rounded-[24px] flex items-center justify-between border border-transparent hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer transition-all group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#0081C9] shadow-sm group-hover:scale-110 transition-transform">
+                        <Briefcase size={20} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 group-hover:text-[#0081C9] transition-colors">{app.job_title}</h4>
+                        <p className="text-[11px] font-bold text-slate-500">{app.company_name || app.company} • {app.job_location || app.location}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 group-hover:text-[#0081C9] transition-colors">{app.job_title}</h4>
-                      <p className="text-[11px] font-bold text-slate-500">{app.company_name || app.company} • {app.job_location || app.location}</p>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <div className="text-right">
+                        <span className={`px-3 py-1 border text-[10px] font-black uppercase rounded-lg ${
+                          app.status === 'shortlisted' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-white border-slate-200 text-slate-500'
+                        }`}>
+                          {app.status}
+                        </span>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1">
+                          {new Date(app.applied_at || app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                      {app.interview_offered === 1 && app.interview_completed !== 1 && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.location.hash = `mockinterview?jobId=${app.job_id}&role=${encodeURIComponent(app.job_title)}`;
+                          }}
+                          className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-2 hover:bg-black transition-all"
+                        >
+                          <Video size={12} /> Interview
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="text-right">
-                      <span className={`px-3 py-1 border text-[10px] font-black uppercase rounded-lg ${
-                        app.status === 'shortlisted' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-white border-slate-200 text-slate-500'
-                      }`}>
-                        {app.status}
-                      </span>
-                      <p className="text-[10px] font-bold text-slate-400 mt-1">
-                        {new Date(app.applied_at || app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                    {app.interview_offered === 1 && app.interview_completed !== 1 && (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.location.hash = `mockinterview?jobId=${app.job_id}&role=${encodeURIComponent(app.job_title)}`;
-                        }}
-                        className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-2 hover:bg-black transition-all"
-                      >
-                        <Video size={12} /> Interview
-                      </button>
-                    )}
+                ))
+              ) : (
+                <div className="p-10 text-center">
+                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mx-auto mb-4">
+                    <Briefcase size={32} />
                   </div>
+                  <p className="text-sm font-bold text-slate-400">No applications found yet.</p>
+                  <button 
+                    onClick={() => window.location.hash = 'jobboard'}
+                    className="mt-4 text-[10px] font-black uppercase tracking-widest text-[#0081C9] hover:underline"
+                  >
+                    Browse available jobs
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
